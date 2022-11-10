@@ -1,0 +1,42 @@
+{
+  "name": "fogata",
+  "version": "0.1.0",
+  "license": "MIT",
+  "dependencies": {
+    "koilib": "^5.2.2",
+    "koinos-precompiler-as": "^0.1.7",
+    "kondor-js": "^0.3.2",
+    "patch-package": "^6.4.7",
+    "postinstall-postinstall": "^2.1.0"
+  },
+  "devDependencies": {
+    "@as-covers/core": "^0.2.1",
+    "@as-pect/cli": "^6.2.4",
+    "@koinos/mock-vm": "^0.4.3",
+    "@koinos/sdk-as": "^0.4.5",
+    "@roaminroe/protoc": "^2.4.0",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "@typescript-eslint/parser": "^5.39.0",
+    "as-proto": "^0.4.0",
+    "assemblyscript": "^0.19.22",
+    "copyfiles": "^2.4.1",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.25.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.8.4",
+    "yaml": "^2.1.3"
+  },
+  "scripts": {
+    "asbuild:debug": "asc contracts/build/index.ts --config contracts/asconfig.json --use abort= --target debug",
+    "asbuild:release": "asc contracts/build/index.ts --config contracts/asconfig.json --use abort= --target release",
+    "build": "yarn precompile && yarn asbuild:release",
+    "precompile": "koinos-precompiler-as contracts",
+    "test": "asp --verbose --config contracts/as-pect.config.js",
+    "deploy": "ts-node contracts/scripts/deployment.ts",
+    "lint": "eslint --max-warnings 0 --ext ts \"*/assembly/**/*.ts\"",
+    "postinstall": "patch-package"
+  },
+  "config": {
+    "protocVersion": "21.8"
+  }
+}

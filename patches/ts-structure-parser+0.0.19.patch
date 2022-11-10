@@ -1,0 +1,23 @@
+diff --git a/node_modules/ts-structure-parser/dist/tsStructureParser.js b/node_modules/ts-structure-parser/dist/tsStructureParser.js
+index 3ed0382..9a64339 100644
+--- a/node_modules/ts-structure-parser/dist/tsStructureParser.js
++++ b/node_modules/ts-structure-parser/dist/tsStructureParser.js
+@@ -342,7 +342,17 @@ function buildType(t, path) {
+         }
+         return res;
+     }
+-    throw new Error("Case not supported: " + t.kind);
++    /**
++     * The parser throws an error here if the argument or
++     * return type contains a "null" type. Example:
++     * 
++     *   myFunction(): my_type | null { ... }
++     * 
++     * A quick solution was to return null
++     */
++
++    return null;
++    // throw new Error("Case not supported: " + t.kind);
+ }
+ exports.buildType = buildType;
+ function parseQualified2(n) {

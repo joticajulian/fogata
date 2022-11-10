@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package token;
+
+import "koinos/options.proto"; 
+
+message str {
+   string value = 1;
+}
+
+message uint32 {
+   uint32 value = 1;
+}
+
+message uint64 {
+   uint64 value = 1 [jstype = JS_STRING];
+}
+
+message boole {
+   bool value = 1;
+}
+
+message info {
+   string name = 1;
+   string symbol = 2;
+   uint32 decimals = 3;
+}
+
+message balance_of_args {
+   bytes owner = 1 [(koinos.btype) = ADDRESS];
+}
+
+message transfer_args {
+   bytes from = 1 [(koinos.btype) = ADDRESS];
+   bytes to = 2 [(koinos.btype) = ADDRESS];
+   uint64 value = 3 [jstype = JS_STRING];
+}
+
+message mint_args {
+   bytes to = 1 [(koinos.btype) = ADDRESS];
+   uint64 value = 2 [jstype = JS_STRING];
+}
+
+message burn_args {
+   bytes from = 1 [(koinos.btype) = ADDRESS];
+   uint64 value = 2 [jstype = JS_STRING];
+}
+
+message balance_object {
+   uint64 value = 1 [jstype = JS_STRING];
+}

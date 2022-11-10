@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package common;
+
+message boole {
+    bool value = 1;
+ }
