@@ -4,4 +4,8 @@ package common;
 
 message boole {
     bool value = 1;
- }
+}
+
+message uint64 {
+    uint64 value = 1 [jstype = JS_STRING];
+}

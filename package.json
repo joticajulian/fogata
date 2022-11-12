@@ -12,8 +12,8 @@
   "devDependencies": {
     "@as-covers/core": "^0.2.1",
     "@as-pect/cli": "^6.2.4",
-    "@koinos/mock-vm": "^0.4.3",
-    "@koinos/sdk-as": "^0.4.5",
+    "@koinos/mock-vm": "^1.0.0",
+    "@koinos/sdk-as": "^1.0.0",
     "@roaminroe/protoc": "^2.4.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
