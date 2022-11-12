@@ -1,4 +1,12 @@
-import { Arrays, System, authority, Storage, pob, Token } from "@koinos/sdk-as";
+import {
+  Arrays,
+  System,
+  authority,
+  Storage,
+  pob,
+  Token,
+  Protobuf,
+} from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
@@ -36,9 +44,8 @@ export class Fogata {
    * @external
    */
   stake(args: fogata.stake_args): common.boole {
-    System.require(args.amount, "no amounts defined to stake");
     System.require(
-      args.amount!.koin > 0 || args.amount!.vhp > 0,
+      args.koin_amount > 0 || args.vhp_amount > 0,
       "either koin amount or vhp amount must be greater than 0"
     );
     // contract definitions
@@ -52,11 +59,11 @@ export class Fogata {
 
     // burn KOINs in the same account to get VHP
     new PoB().burn(
-      new pob.burn_arguments(args.amount!.koin, args.account, args.account)
+      new pob.burn_arguments(args.koin_amount, args.account, args.account)
     );
 
     // transfer all VHP to the pool
-    const userVirtual = args.amount!.vhp + args.amount!.koin;
+    const userVirtual = args.koin_amount + args.vhp_amount;
     const transferStatus = vhpContract.transfer(
       args.account!,
       this.contractId,
@@ -98,6 +105,14 @@ export class Fogata {
     poolStake.value += userStake;
     this.poolStake.put(poolStake);
 
+    System.event(
+      "fogata.stake",
+      Protobuf.encode(
+        new fogata.stake_event(args.account!, userVirtual, userStake),
+        fogata.stake_event.encode
+      ),
+      [args.account!]
+    );
     return new common.boole(true);
   }
 }

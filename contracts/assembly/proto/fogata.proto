@@ -4,12 +4,14 @@ package fogata;
 
 import "koinos/options.proto"; 
 
-message amount {
-   uint64 koin = 1 [jstype = JS_STRING];
-   uint64 vhp = 2 [jstype = JS_STRING];
-}
-
 message stake_args {
    bytes account = 1 [(koinos.btype) = ADDRESS];
-   amount amount = 2;
+   uint64 koin_amount = 2 [jstype = JS_STRING];
+   uint64 vhp_amount = 3 [jstype = JS_STRING];
+}
+
+message stake_event {
+   bytes account = 1 [(koinos.btype) = ADDRESS];
+   uint64 virtual_amount = 2 [jstype = JS_STRING];
+   uint64 stake = 3 [jstype = JS_STRING];
 }
