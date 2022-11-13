@@ -15,3 +15,13 @@ message stake_event {
    uint64 virtual_amount = 2 [jstype = JS_STRING];
    uint64 stake = 3 [jstype = JS_STRING];
 }
+
+message beneficiary {
+   bytes address = 1 [(koinos.btype) = ADDRESS];
+   // all percentages use 3 decimals (1000 => 1%)
+   uint32 percetage = 2;
+}
+
+message pool_params {
+   repeated beneficiary beneficiaries = 1;
+}

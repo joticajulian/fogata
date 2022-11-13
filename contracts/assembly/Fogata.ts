@@ -6,26 +6,30 @@ import {
   pob,
   Token,
   Protobuf,
+  Base58,
 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
+import { Ownable } from "./Ownable";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 
-export class Fogata {
+export class Fogata extends Ownable {
   callArgs: System.getArgumentsReturn | null;
 
-  contractId: Uint8Array;
+  koinContract: Token | null;
+
+  vhpContract: Token | null;
 
   poolStake: Storage.Obj<common.uint64>;
 
   stakes: Storage.Map<Uint8Array, common.uint64>;
 
-  nodeOperatorFees: Storage.Obj<common.uint64>;
-
   lastPoolVirtual: Storage.Obj<common.uint64>;
 
+  poolParams: Storage.Obj<fogata.pool_params>;
+
   constructor() {
-    this.contractId = System.getContractId();
+    super();
 
     this.poolStake = new Storage.Obj(
       this.contractId,
@@ -41,13 +45,6 @@ export class Fogata {
       common.uint64.encode,
       () => new common.uint64(0)
     );
-    this.nodeOperatorFees = new Storage.Obj(
-      this.contractId,
-      2,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
-    );
     this.lastPoolVirtual = new Storage.Obj(
       this.contractId,
       2,
@@ -55,6 +52,30 @@ export class Fogata {
       common.uint64.encode,
       () => new common.uint64(0)
     );
+    this.poolParams = new Storage.Obj(
+      this.contractId,
+      3,
+      fogata.pool_params.decode,
+      fogata.pool_params.encode,
+      () =>
+        new fogata.pool_params([
+          new fogata.beneficiary(Base58.decode("todo: address sponsors"), 3000),
+        ])
+    );
+  }
+
+  getKoinContract(): Token {
+    if (!this.koinContract) {
+      this.koinContract = new Token(System.getContractAddress("koin"));
+    }
+    return this.koinContract!;
+  }
+
+  getVhpContract(): Token {
+    if (!this.vhpContract) {
+      this.vhpContract = new Token(System.getContractAddress("vhp"));
+    }
+    return this.vhpContract!;
   }
 
   /**
@@ -65,43 +86,48 @@ export class Fogata {
    * twice, the second call will not have effect because the
    * fees will be already taken
    */
-  updateNodeOperatorFee(
-    contractBalance: u64,
-    saveLastPoolVirtual: boolean
-  ): u64 {
+  payBeneficiaries(poolVirtual: u64, saveLastPoolVirtual: boolean): u64 {
     const lastPoolVirtual = this.lastPoolVirtual.get()!;
-    const nodeOperatorFees = this.nodeOperatorFees.get()!;
-
-    // This contract contains in its balance the tokens of
-    // the users and the tokens of the node operator. The process
-    // to calculate the fees is as follows:
-
-    // Take the total balance and remove the fees already earned
-    // by the operator to get the new virtual balance
-    const poolVirtualAndFee = contractBalance - nodeOperatorFees.value;
 
     // check how much this virtual balance has increased
-    const deltaPoolVirtual = poolVirtualAndFee - lastPoolVirtual.value;
-    if (deltaPoolVirtual < 0) error;
+    System.require(
+      poolVirtual >= lastPoolVirtual.value,
+      `internal error: current balance (koin + vhp) should be greater than ${poolVirtual}`
+    );
+    const deltaPoolVirtual = poolVirtual - lastPoolVirtual.value;
 
-    // calculate new fees earned by the node operator
-    const newFee = deltaPoolVirtual * fee_percentage;
+    // calculate new fees earned and transfer them to the beneficiaries
+    const poolParams = this.poolParams.get()!;
+    let totalFeesCollected = 0;
+    for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
+      const beneficiary = poolParams.beneficiaries[i];
+      // todo: use bigint
+      const fee = (deltaPoolVirtual * beneficiary.percetage) / 1e5;
+      if (fee > 0) {
+        const statusTransfer = this.getKoinContract().transfer(
+          this.contractId,
+          beneficiary.address!,
+          fee
+        );
+        System.require(
+          statusTransfer == true,
+          `transfer to beneficiary number ${i} was rejected`
+        );
+        totalFeesCollected += fee;
+      }
+    }
 
     // calculate the new virtual balance of the pool
-    const poolVirtual = poolVirtualAndFee - newFee;
-
-    // update values
-    nodeOperatorFees.value += newFee;
-    this.nodeOperatorFees.put(nodeOperatorFees);
+    const poolVirtualUpdated = poolVirtual - totalFeesCollected;
 
     // option indicating if lastPoolVirtual should be updated
     // now or if it will be done later (to reduce calls to the
     // system)
     if (saveLastPoolVirtual) {
-      lastPoolVirtual.value = poolVirtual;
+      lastPoolVirtual.value = poolVirtualUpdated;
       this.lastPoolVirtual.put(lastPoolVirtual);
     }
-    return poolVirtual;
+    return poolVirtualUpdated;
   }
 
   /**
@@ -113,15 +139,12 @@ export class Fogata {
       args.koin_amount > 0 || args.vhp_amount > 0,
       "either koin amount or vhp amount must be greater than 0"
     );
-    // contract definitions
-    const koinContract = new Token(System.getContractAddress("koin"));
-    const vhpContract = new Token(System.getContractAddress("vhp"));
 
     // get the virtual balance of pool before making the transfer
     const contractBalance =
-      koinContract.balanceOf(this.contractId) +
-      vhpContract.balanceOf(this.contractId);
-    const poolVirtualOld = this.updateNodeOperatorFee(contractBalance, false);
+      this.getKoinContract().balanceOf(this.contractId) +
+      this.getVhpContract().balanceOf(this.contractId);
+    const poolVirtualOld = this.payBeneficiaries(contractBalance, false);
 
     // burn KOINs in the same account to get VHP
     new PoB().burn(
@@ -130,7 +153,7 @@ export class Fogata {
 
     // transfer all VHP to the pool
     const deltaUserVirtual = args.koin_amount + args.vhp_amount;
-    const transferStatus = vhpContract.transfer(
+    const transferStatus = this.getVhpContract().transfer(
       args.account!,
       this.contractId,
       deltaUserVirtual
@@ -191,15 +214,11 @@ export class Fogata {
    * @external
    */
   unstake(args: fogata.stake_args): common.boole {
-    // contract definitions
-    const koinContract = new Token(System.getContractAddress("koin"));
-    const vhpContract = new Token(System.getContractAddress("vhp"));
-
     // get the virtual balance of pool before making the transfer
     const contractBalance =
-      koinContract.balanceOf(this.contractId) +
-      vhpContract.balanceOf(this.contractId);
-    const poolVirtualOld = this.updateNodeOperatorFee(contractBalance, false);
+      this.getKoinContract().balanceOf(this.contractId) +
+      this.getVhpContract().balanceOf(this.contractId);
+    const poolVirtualOld = this.payBeneficiaries(contractBalance, false);
 
     // get current stake of the user
     const userStake = this.stakes.get(args.account!)!;
@@ -224,7 +243,7 @@ export class Fogata {
     // todo: check limits KOIN
 
     if (args.koin_amount > 0) {
-      const transferStatus1 = koinContract.transfer(
+      const transferStatus1 = this.getKoinContract().transfer(
         this.contractId,
         args.account!,
         args.koin_amount
@@ -232,12 +251,12 @@ export class Fogata {
       System.require(transferStatus1 == true, "transfer of koins rejected");
     }
     if (args.vhp_amount > 0) {
-      const transferStatus2 = vhpContract.transfer(
+      const transferStatus2 = this.getVhpContract().transfer(
         this.contractId,
         args.account!,
         args.vhp_amount
       );
-      System.require(transferStatus2 == true, "transfer of koins rejected");
+      System.require(transferStatus2 == true, "transfer of vhp rejected");
     }
 
     // remove stake from the user
