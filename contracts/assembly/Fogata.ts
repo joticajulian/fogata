@@ -1,17 +1,9 @@
-import {
-  Arrays,
-  System,
-  authority,
-  Storage,
-  pob,
-  Token,
-  Protobuf,
-  Base58,
-} from "@koinos/sdk-as";
+import { System, Storage, pob, Token, Protobuf, Base58 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { Ownable } from "./Ownable";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
+import { multiplyAndDivide } from "./utils";
 
 export class Fogata extends Ownable {
   callArgs: System.getArgumentsReturn | null;
@@ -79,14 +71,20 @@ export class Fogata extends Ownable {
   }
 
   /**
-   * Function to update the fees taken by the operator
-   * if any, based on the virtual balance of the pool.
+   * Function to update the fees distributed to beneficiaries
+   * (like node operator or sponsors program) based on the
+   * virtual balance of the pool.
    *
    * This function is done in a way that if it's called
    * twice, the second call will not have effect because the
    * fees will be already taken
    */
-  payBeneficiaries(poolVirtual: u64, saveLastPoolVirtual: boolean): u64 {
+  payBeneficiaries(saveLastPoolVirtual: boolean): u64 {
+    // get the virtual balance of pool
+    const poolVirtual =
+      this.getKoinContract().balanceOf(this.contractId) +
+      this.getVhpContract().balanceOf(this.contractId);
+
     const lastPoolVirtual = this.lastPoolVirtual.get()!;
 
     // check how much this virtual balance has increased
@@ -98,11 +96,15 @@ export class Fogata extends Ownable {
 
     // calculate new fees earned and transfer them to the beneficiaries
     const poolParams = this.poolParams.get()!;
-    let totalFeesCollected = 0;
+    let totalFeesCollected: u64 = 0;
     for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
       const beneficiary = poolParams.beneficiaries[i];
-      // todo: use bigint
-      const fee = (deltaPoolVirtual * beneficiary.percetage) / 1e5;
+      // fee = deltaPoolVirtual * beneficiary.percentage / 1e5
+      const fee = multiplyAndDivide(
+        deltaPoolVirtual,
+        beneficiary.percetage,
+        1e5 as u64
+      );
       if (fee > 0) {
         const statusTransfer = this.getKoinContract().transfer(
           this.contractId,
@@ -140,11 +142,9 @@ export class Fogata extends Ownable {
       "either koin amount or vhp amount must be greater than 0"
     );
 
-    // get the virtual balance of pool before making the transfer
-    const contractBalance =
-      this.getKoinContract().balanceOf(this.contractId) +
-      this.getVhpContract().balanceOf(this.contractId);
-    const poolVirtualOld = this.payBeneficiaries(contractBalance, false);
+    // distribute pending payments and get the virtual balance
+    // before making the transfer
+    const poolVirtualOld = this.payBeneficiaries(false);
 
     // burn KOINs in the same account to get VHP
     new PoB().burn(
@@ -181,8 +181,11 @@ export class Fogata extends Ownable {
       //
       // after some math the new stake for the user is calculated as:
       // delta_userStake = delta_userVirtual * poolStake_old / poolVirtual_old
-      deltaUserStake = (deltaUserVirtual * poolStake.value) / poolVirtualOld;
-      // todo: use bigint
+      deltaUserStake = multiplyAndDivide(
+        deltaUserVirtual,
+        poolStake.value,
+        poolVirtualOld
+      );
     }
 
     // add new stake to the user
@@ -214,11 +217,8 @@ export class Fogata extends Ownable {
    * @external
    */
   unstake(args: fogata.stake_args): common.boole {
-    // get the virtual balance of pool before making the transfer
-    const contractBalance =
-      this.getKoinContract().balanceOf(this.contractId) +
-      this.getVhpContract().balanceOf(this.contractId);
-    const poolVirtualOld = this.payBeneficiaries(contractBalance, false);
+    // distribute pending payments and get the virtual balance
+    const poolVirtualOld = this.payBeneficiaries(false);
 
     // get current stake of the user
     const userStake = this.stakes.get(args.account!)!;
@@ -228,8 +228,12 @@ export class Fogata extends Ownable {
     // note: same maths applied as in the stake function. Check there
     // for more details
     const poolStake = this.poolStake.get()!;
-    const userVirtual = (userStake.value * poolVirtualOld) / poolStake.value;
-    // todo: use bigint
+    // userVirtual = (userStake.value * poolVirtualOld) / poolStake.value;
+    const userVirtual = multiplyAndDivide(
+      userStake.value,
+      poolVirtualOld,
+      poolStake.value
+    );
 
     const deltaUserVirtual = args.koin_amount + args.vhp_amount;
     System.require(
@@ -237,8 +241,12 @@ export class Fogata extends Ownable {
       "insufficient virtual balance"
     );
 
-    const deltaUserStake =
-      (deltaUserVirtual * poolStake.value) / poolVirtualOld;
+    // deltaUserStake = (deltaUserVirtual * poolStake.value) / poolVirtualOld;
+    const deltaUserStake = multiplyAndDivide(
+      deltaUserVirtual,
+      poolStake.value,
+      poolVirtualOld
+    );
 
     // todo: check limits KOIN
 

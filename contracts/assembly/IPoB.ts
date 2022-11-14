@@ -15,7 +15,9 @@ export class PoB {
     const callRes = System.call(this._contractId, 0x859facc5, argsBuffer);
     if (callRes.code != 0) {
       const errorMessage = `failed to call 'PoB.burn': ${
-        callRes.res.error ? callRes.res.error!.message : ""
+        callRes.res.error && callRes.res.error!.message
+          ? callRes.res.error!.message!
+          : ""
       }`;
       System.exit(callRes.code, StringBytes.stringToBytes(errorMessage));
     }
