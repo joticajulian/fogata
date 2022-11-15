@@ -18,10 +18,19 @@ message stake_event {
 
 message beneficiary {
    bytes address = 1 [(koinos.btype) = ADDRESS];
-   // all percentages use 3 decimals (1000 => 1%)
-   uint32 percetage = 2;
+   uint32 percetage = 2; // all percentages use 3 decimals (1000 => 1%)
 }
 
 message pool_params {
-   repeated beneficiary beneficiaries = 1;
+   string name = 1;
+   string image = 2;
+   string description = 3;
+   repeated beneficiary beneficiaries = 4;
+   uint64 payment_period = 5; // time in milliseconds
+}
+
+message pool_state {
+   uint64 stake = 1;
+   uint64 virtual = 2; // total virtual balance (koin + vhp)
+   uint64 koin = 3;
 }

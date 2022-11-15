@@ -1,4 +1,4 @@
-import { System, Storage, pob, Token, Protobuf, Base58 } from "@koinos/sdk-as";
+import { System, Storage, pob, Token, Protobuf } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { Ownable } from "./Ownable";
 import { fogata } from "./proto/fogata";
@@ -8,28 +8,43 @@ import { multiplyAndDivide } from "./utils";
 export class Fogata extends Ownable {
   callArgs: System.getArgumentsReturn | null;
 
+  // System contracts
+
   koinContract: Token | null;
 
   vhpContract: Token | null;
 
-  poolStake: Storage.Obj<common.uint64>;
+  // Configuration
+
+  poolParams: Storage.Obj<fogata.pool_params>;
+
+  // Current state of the pool
 
   stakes: Storage.Map<Uint8Array, common.uint64>;
 
-  lastPoolVirtual: Storage.Obj<common.uint64>;
+  poolState: Storage.Obj<fogata.pool_state>;
 
-  poolParams: Storage.Obj<fogata.pool_params>;
+  // Previous state of the pool (snapshot)
+
+  koinBalances: Storage.Map<Uint8Array, common.uint64>;
+
+  poolSnapshotState: Storage.Obj<fogata.pool_state>;
+
+  koinWithdrawn: Storage.Obj<common.uint64>;
+
+  nextPayment: Storage.Obj<common.uint64>;
 
   constructor() {
     super();
 
-    this.poolStake = new Storage.Obj(
+    this.poolParams = new Storage.Obj(
       this.contractId,
       0,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
+      fogata.pool_params.decode,
+      fogata.pool_params.encode,
+      () => new fogata.pool_params()
     );
+
     this.stakes = new Storage.Map(
       this.contractId,
       1,
@@ -37,22 +52,45 @@ export class Fogata extends Ownable {
       common.uint64.encode,
       () => new common.uint64(0)
     );
-    this.lastPoolVirtual = new Storage.Obj(
+
+    this.poolState = new Storage.Obj(
       this.contractId,
       2,
+      fogata.pool_state.decode,
+      fogata.pool_state.encode,
+      () => new fogata.pool_state(0, 0)
+    );
+
+    this.koinBalances = new Storage.Map(
+      this.contractId,
+      3,
       common.uint64.decode,
       common.uint64.encode,
       () => new common.uint64(0)
     );
-    this.poolParams = new Storage.Obj(
+
+    this.poolSnapshotState = new Storage.Obj(
       this.contractId,
-      3,
-      fogata.pool_params.decode,
-      fogata.pool_params.encode,
-      () =>
-        new fogata.pool_params([
-          new fogata.beneficiary(Base58.decode("todo: address sponsors"), 3000),
-        ])
+      4,
+      fogata.pool_state.decode,
+      fogata.pool_state.encode,
+      () => new fogata.pool_state(0, 0)
+    );
+
+    this.koinWithdrawn = new Storage.Obj(
+      this.contractId,
+      5,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
+    );
+
+    this.nextPayment = new Storage.Obj(
+      this.contractId,
+      6,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
     );
   }
 
@@ -71,28 +109,116 @@ export class Fogata extends Ownable {
   }
 
   /**
+   * Set mining pool parameters
+   * @external
+   */
+  set_pool_params(args: fogata.pool_params): common.boole {
+    System.require(
+      this.only_owner(),
+      "owner has not authorized to update params"
+    );
+    this.poolParams.put(args);
+    System.event("fogata.set_pool_params", this.callArgs!.args, []);
+    return new common.boole(true);
+  }
+
+  /**
+   * Get mining pool parameters
+   * @external
+   * @readonly
+   */
+  get_pool_params(): fogata.pool_params {
+    return this.poolParams.get()!;
+  }
+
+  /**
+   * Function to take snapshot of koin balances
+   */
+  take_snapshot(): common.boole {
+    const now = System.getBlockField("header.timestamp")!.uint64_value;
+    const nextPayment = this.nextPayment.get()!;
+    const paymentPeriod = this.poolParams.get()!.payment_period;
+    const poolState = this.poolState.get()!;
+
+    if (now < nextPayment.value) {
+      // it is not yet time to pay
+      return new common.boole(false);
+    }
+
+    if (nextPayment.value == 0) {
+      // initialization?? re check
+      nextPayment.value = now + paymentPeriod;
+      this.nextPayment.put(nextPayment);
+      return new common.boole(false);
+    }
+
+    poolState.koin = this.getKoinContract().totalSupply();
+
+    // calculate the maximum amount of KOIN that each address
+    // can withdraw in the next period
+    let account = new Uint8Array(0);
+    while (true) {
+      const obj = this.stakes.getNext(account);
+      if (!obj) break;
+      account = obj.key!;
+      const userStake = obj.value;
+      const koinBalance = multiplyAndDivide(
+        userStake.value,
+        poolState.koin,
+        poolState.stake
+      );
+      this.koinBalances.put(account, new common.uint64(koinBalance));
+    }
+
+    // burn the amount that was not withdrawn in the previous period
+    const koinWithdrawn = this.koinWithdrawn.get()!;
+    const poolSnapshotState = this.poolSnapshotState.get()!;
+    System.require(
+      poolSnapshotState.koin >= koinWithdrawn.value,
+      "internal error: poolSnapshotState.koin < koinWithdrawn.value"
+    );
+    const amountToBurn = poolSnapshotState.koin - koinWithdrawn.value;
+    if (amountToBurn > 0) {
+      new PoB().burn(
+        new pob.burn_arguments(amountToBurn, this.contractId, this.contractId)
+      );
+    }
+
+    // reset koinWithdrawn counter, save snapshot,
+    // and set time for the next payment
+    this.koinWithdrawn.put(new common.uint64(0));
+    this.poolSnapshotState.put(poolState);
+    nextPayment.value += paymentPeriod;
+    this.nextPayment.put(nextPayment);
+
+    return new common.boole(true);
+  }
+
+  /**
    * Function to update the fees distributed to beneficiaries
    * (like node operator or sponsors program) based on the
    * virtual balance of the pool.
    *
    * This function is done in a way that if it's called
    * twice, the second call will not have effect because the
-   * fees will be already taken
+   * fees will be already taken.
+   *
+   * Note: this function doesn't update the storage to reduce calls
+   * to it. So, the poolState must be updated outside of this
+   * function.
    */
-  payBeneficiaries(saveLastPoolVirtual: boolean): u64 {
+  payBeneficiaries(lastPoolVirtual: u64): u64 {
     // get the virtual balance of pool
     const poolVirtual =
       this.getKoinContract().balanceOf(this.contractId) +
       this.getVhpContract().balanceOf(this.contractId);
 
-    const lastPoolVirtual = this.lastPoolVirtual.get()!;
-
     // check how much this virtual balance has increased
     System.require(
-      poolVirtual >= lastPoolVirtual.value,
+      poolVirtual >= lastPoolVirtual,
       `internal error: current balance (koin + vhp) should be greater than ${poolVirtual}`
     );
-    const deltaPoolVirtual = poolVirtual - lastPoolVirtual.value;
+    const deltaPoolVirtual = poolVirtual - lastPoolVirtual;
 
     // calculate new fees earned and transfer them to the beneficiaries
     const poolParams = this.poolParams.get()!;
@@ -120,16 +246,7 @@ export class Fogata extends Ownable {
     }
 
     // calculate the new virtual balance of the pool
-    const poolVirtualUpdated = poolVirtual - totalFeesCollected;
-
-    // option indicating if lastPoolVirtual should be updated
-    // now or if it will be done later (to reduce calls to the
-    // system)
-    if (saveLastPoolVirtual) {
-      lastPoolVirtual.value = poolVirtualUpdated;
-      this.lastPoolVirtual.put(lastPoolVirtual);
-    }
-    return poolVirtualUpdated;
+    return poolVirtual - totalFeesCollected;
   }
 
   /**
@@ -142,14 +259,18 @@ export class Fogata extends Ownable {
       "either koin amount or vhp amount must be greater than 0"
     );
 
+    const poolState = this.poolState.get()!;
+
     // distribute pending payments and get the virtual balance
     // before making the transfer
-    const poolVirtualOld = this.payBeneficiaries(false);
+    poolState.virtual = this.payBeneficiaries(poolState.virtual);
 
     // burn KOINs in the same account to get VHP
-    new PoB().burn(
-      new pob.burn_arguments(args.koin_amount, args.account, args.account)
-    );
+    if (args.koin_amount > 0) {
+      new PoB().burn(
+        new pob.burn_arguments(args.koin_amount, args.account, args.account)
+      );
+    }
 
     // transfer all VHP to the pool
     const deltaUserVirtual = args.koin_amount + args.vhp_amount;
@@ -165,8 +286,7 @@ export class Fogata extends Ownable {
 
     // calculate stake of the user
     let deltaUserStake: u64;
-    const poolStake = this.poolStake.get()!;
-    if (poolStake.value == 0) {
+    if (poolState.stake == 0) {
       // this is the first stake in the pool
       deltaUserStake = deltaUserVirtual;
     } else {
@@ -183,8 +303,8 @@ export class Fogata extends Ownable {
       // delta_userStake = delta_userVirtual * poolStake_old / poolVirtual_old
       deltaUserStake = multiplyAndDivide(
         deltaUserVirtual,
-        poolStake.value,
-        poolVirtualOld
+        poolState.stake,
+        poolState.virtual
       );
     }
 
@@ -193,13 +313,10 @@ export class Fogata extends Ownable {
     userStake.value += deltaUserStake;
     this.stakes.put(args.account!, userStake);
 
-    // update the total pool stake
-    poolStake.value += deltaUserStake;
-    this.poolStake.put(poolStake);
-
-    // update last pool virtual
-    const poolVirtualNew = poolVirtualOld + deltaUserVirtual;
-    this.lastPoolVirtual.put(new common.uint64(poolVirtualNew));
+    // update pool state
+    poolState.stake += deltaUserStake;
+    poolState.virtual += deltaUserVirtual;
+    this.poolState.put(poolState);
 
     System.event(
       "fogata.stake",
@@ -217,8 +334,10 @@ export class Fogata extends Ownable {
    * @external
    */
   unstake(args: fogata.stake_args): common.boole {
+    const poolState = this.poolState.get()!;
+
     // distribute pending payments and get the virtual balance
-    const poolVirtualOld = this.payBeneficiaries(false);
+    poolState.virtual = this.payBeneficiaries(poolState.virtual);
 
     // get current stake of the user
     const userStake = this.stakes.get(args.account!)!;
@@ -227,12 +346,11 @@ export class Fogata extends Ownable {
     //
     // note: same maths applied as in the stake function. Check there
     // for more details
-    const poolStake = this.poolStake.get()!;
-    // userVirtual = (userStake.value * poolVirtualOld) / poolStake.value;
+    // userVirtual = (userStake * poolVirtual_old) / poolStake_old;
     const userVirtual = multiplyAndDivide(
       userStake.value,
-      poolVirtualOld,
-      poolStake.value
+      poolState.virtual,
+      poolState.stake
     );
 
     const deltaUserVirtual = args.koin_amount + args.vhp_amount;
@@ -241,11 +359,11 @@ export class Fogata extends Ownable {
       "insufficient virtual balance"
     );
 
-    // deltaUserStake = (deltaUserVirtual * poolStake.value) / poolVirtualOld;
+    // deltaUserStake = (delta_userVirtual * poolStake_old) / poolVirtual_old
     const deltaUserStake = multiplyAndDivide(
       deltaUserVirtual,
-      poolStake.value,
-      poolVirtualOld
+      poolState.stake,
+      poolState.virtual
     );
 
     // todo: check limits KOIN
@@ -271,14 +389,19 @@ export class Fogata extends Ownable {
     userStake.value -= deltaUserStake;
     this.stakes.put(args.account!, userStake);
 
-    // update the total pool stake
-    poolStake.value -= deltaUserStake;
-    this.poolStake.put(poolStake);
+    // update pool state
+    poolState.stake -= deltaUserStake;
+    poolState.virtual -= deltaUserVirtual;
+    this.poolState.put(poolState);
 
-    // update last pool virtual
-    const poolVirtualNew = poolVirtualOld - deltaUserVirtual;
-    this.lastPoolVirtual.put(new common.uint64(poolVirtualNew));
-
+    System.event(
+      "fogata.unstake",
+      Protobuf.encode(
+        new fogata.stake_event(args.account!, deltaUserVirtual, deltaUserStake),
+        fogata.stake_event.encode
+      ),
+      [args.account!]
+    );
     return new common.boole(true);
   }
 }
