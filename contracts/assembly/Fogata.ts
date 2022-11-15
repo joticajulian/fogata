@@ -26,9 +26,9 @@ export class Fogata extends Ownable {
 
   // Previous state of the pool (snapshot)
 
-  koinBalances: Storage.Map<Uint8Array, common.uint64>;
+  previousStakes: Storage.Map<Uint8Array, common.uint64>;
 
-  poolSnapshotState: Storage.Obj<fogata.pool_state>;
+  previousPoolState: Storage.Obj<fogata.pool_state>;
 
   koinWithdrawn: Storage.Obj<common.uint64>;
 
@@ -58,10 +58,10 @@ export class Fogata extends Ownable {
       2,
       fogata.pool_state.decode,
       fogata.pool_state.encode,
-      () => new fogata.pool_state(0, 0)
+      () => new fogata.pool_state(0, 0, 0)
     );
 
-    this.koinBalances = new Storage.Map(
+    this.previousStakes = new Storage.Map(
       this.contractId,
       3,
       common.uint64.decode,
@@ -69,12 +69,12 @@ export class Fogata extends Ownable {
       () => new common.uint64(0)
     );
 
-    this.poolSnapshotState = new Storage.Obj(
+    this.previousPoolState = new Storage.Obj(
       this.contractId,
       4,
       fogata.pool_state.decode,
       fogata.pool_state.encode,
-      () => new fogata.pool_state(0, 0)
+      () => new fogata.pool_state(0, 0, 0)
     );
 
     this.koinWithdrawn = new Storage.Obj(
@@ -146,13 +146,12 @@ export class Fogata extends Ownable {
     }
 
     if (nextPayment.value == 0) {
-      // initialization?? re check
       nextPayment.value = now + paymentPeriod;
       this.nextPayment.put(nextPayment);
       return new common.boole(false);
     }
 
-    poolState.koin = this.getKoinContract().totalSupply();
+    poolState.koin = this.getKoinContract().balanceOf(this.contractId);
 
     // calculate the maximum amount of KOIN that each address
     // can withdraw in the next period
@@ -162,32 +161,27 @@ export class Fogata extends Ownable {
       if (!obj) break;
       account = obj.key!;
       const userStake = obj.value;
-      const koinBalance = multiplyAndDivide(
-        userStake.value,
-        poolState.koin,
-        poolState.stake
-      );
-      this.koinBalances.put(account, new common.uint64(koinBalance));
+      this.previousStakes.put(account, userStake);
     }
 
     // burn the amount that was not withdrawn in the previous period
     const koinWithdrawn = this.koinWithdrawn.get()!;
-    const poolSnapshotState = this.poolSnapshotState.get()!;
+    const previousPoolState = this.previousPoolState.get()!;
     System.require(
-      poolSnapshotState.koin >= koinWithdrawn.value,
-      "internal error: poolSnapshotState.koin < koinWithdrawn.value"
+      previousPoolState.koin >= koinWithdrawn.value,
+      "internal error: previousPoolState.koin < koinWithdrawn.value"
     );
-    const amountToBurn = poolSnapshotState.koin - koinWithdrawn.value;
+    const amountToBurn = previousPoolState.koin - koinWithdrawn.value;
     if (amountToBurn > 0) {
       new PoB().burn(
         new pob.burn_arguments(amountToBurn, this.contractId, this.contractId)
       );
     }
 
-    // reset koinWithdrawn counter, save snapshot,
+    // reset koinWithdrawn counter, update previous pool state,
     // and set time for the next payment
     this.koinWithdrawn.put(new common.uint64(0));
-    this.poolSnapshotState.put(poolState);
+    this.previousPoolState.put(poolState);
     nextPayment.value += paymentPeriod;
     this.nextPayment.put(nextPayment);
 
@@ -306,6 +300,7 @@ export class Fogata extends Ownable {
         poolState.stake,
         poolState.virtual
       );
+      // todo: division 0 when poolState.stake = 0
     }
 
     // add new stake to the user
@@ -352,6 +347,7 @@ export class Fogata extends Ownable {
       poolState.virtual,
       poolState.stake
     );
+    // todo: division 0 when poolState.stake = 0
 
     const deltaUserVirtual = args.koin_amount + args.vhp_amount;
     System.require(
@@ -366,7 +362,19 @@ export class Fogata extends Ownable {
       poolState.virtual
     );
 
-    // todo: check limits KOIN
+    const userPreviousStake = this.previousStakes.get(args.account!)!;
+    const previousPoolState = this.previousPoolState.get()!;
+    const maxKoin = multiplyAndDivide(
+      userPreviousStake.value,
+      previousPoolState.koin,
+      previousPoolState.stake
+    );
+    // todo: division 0 when poolState.stake = 0
+
+    System.require(
+      args.koin_amount <= maxKoin,
+      `you can withdraw max ${maxKoin} satoshis of koin for this period. Requested ${args.koin_amount}`
+    );
 
     if (args.koin_amount > 0) {
       const transferStatus1 = this.getKoinContract().transfer(
