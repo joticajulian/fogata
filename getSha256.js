@@ -11,18 +11,12 @@ function humanFileSize(size) {
   );
 }
 
-const [contract] = process.argv.slice(2);
-const filePath = path.join(
-  __dirname,
-  "contracts",
-  contract,
-  "build/release/contract.wasm"
-);
+const filePath = path.join(__dirname, "contracts/build/release/contract.wasm");
 const data = fs.readFileSync(filePath);
 const hash = crypto.createHash("sha256").update(data).digest("hex");
 
 console.log(`
-contract: ${contract}
+contract: fogata
 file:     ${filePath}
 size:     ${data.length} bytes (${humanFileSize(data.length)})
 sha256:   ${hash}

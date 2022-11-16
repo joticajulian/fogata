@@ -38,5 +38,9 @@ message pool_params {
 message pool_state {
    uint64 stake = 1;
    uint64 virtual = 2; // total virtual balance (koin + vhp)
-   uint64 koin = 3;
+   uint64 previous_stake = 3;
+   uint64 previous_koin = 4;
+   uint64 current_payment_time = 5;
+   uint64 next_payment_time = 6;
+   uint64 koin_withdrawn = 7;
 }

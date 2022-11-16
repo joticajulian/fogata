@@ -18,23 +18,13 @@ export class Fogata extends Ownable {
 
   poolParams: Storage.Obj<fogata.pool_params>;
 
-  // Current state of the pool
-
-  stakes: Storage.Map<Uint8Array, common.uint64>;
+  // State of the pool
 
   poolState: Storage.Obj<fogata.pool_state>;
 
-  // Previous state of the pool (snapshot)
+  stakes: Storage.Map<Uint8Array, common.uint64>;
 
   previousStakes: Storage.Map<Uint8Array, fogata.previous_stake>;
-
-  previousPoolState: Storage.Obj<fogata.pool_state>;
-
-  currentPaymentTime: Storage.Obj<common.uint64>;
-
-  nextPaymentTime: Storage.Obj<common.uint64>;
-
-  koinWithdrawn: Storage.Obj<common.uint64>;
 
   constructor() {
     super();
@@ -47,14 +37,6 @@ export class Fogata extends Ownable {
       () => new fogata.pool_params()
     );
 
-    this.stakes = new Storage.Map(
-      this.contractId,
-      1,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
-    );
-
     this.poolState = new Storage.Obj(
       this.contractId,
       2,
@@ -63,44 +45,20 @@ export class Fogata extends Ownable {
       () => new fogata.pool_state(0, 0, 0)
     );
 
+    this.stakes = new Storage.Map(
+      this.contractId,
+      1,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
+    );
+
     this.previousStakes = new Storage.Map(
       this.contractId,
       3,
       fogata.previous_stake.decode,
       fogata.previous_stake.encode,
       () => new fogata.previous_stake(0, 0, false)
-    );
-
-    this.previousPoolState = new Storage.Obj(
-      this.contractId,
-      4,
-      fogata.pool_state.decode,
-      fogata.pool_state.encode,
-      () => new fogata.pool_state(0, 0, 0)
-    );
-
-    this.koinWithdrawn = new Storage.Obj(
-      this.contractId,
-      5,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
-    );
-
-    this.currentPaymentTime = new Storage.Obj(
-      this.contractId,
-      6,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
-    );
-
-    this.nextPaymentTime = new Storage.Obj(
-      this.contractId,
-      7,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
     );
   }
 
@@ -146,33 +104,35 @@ export class Fogata extends Ownable {
    */
   take_snapshot(): common.boole {
     const now = System.getBlockField("header.timestamp")!.uint64_value;
-    const nextPaymentTime = this.nextPaymentTime.get()!;
-    const paymentPeriod = this.poolParams.get()!.payment_period;
     const poolState = this.poolState.get()!;
+    const paymentPeriod = this.poolParams.get()!.payment_period;
 
-    if (now < nextPaymentTime.value) {
+    if (now < poolState.next_payment_time) {
       // it is not yet time to pay
       return new common.boole(false);
     }
 
-    if (nextPaymentTime.value == 0) {
-      nextPaymentTime.value = now + paymentPeriod;
-      this.currentPaymentTime.put(now);
-      this.nextPaymentTime.put(nextPaymentTime);
+    if (poolState.next_payment_time == 0) {
+      poolState.current_payment_time = now;
+      poolState.next_payment_time = now + paymentPeriod;
+      this.poolState.put(poolState);
       return new common.boole(false);
     }
 
-    poolState.koin = this.getKoinContract().balanceOf(this.contractId);
+    const koinBalance = this.getKoinContract().balanceOf(this.contractId);
 
     // burn the amount that was not withdrawn in the previous period
-    const koinWithdrawn = this.koinWithdrawn.get()!;
-    const previousPoolState = this.previousPoolState.get()!;
     System.require(
-      previousPoolState.koin >= koinWithdrawn.value,
-      "internal error: previousPoolState.koin < koinWithdrawn.value"
+      poolState.previous_koin >= poolState.koin_withdrawn,
+      "internal error: poolState.previous_koin < poolState.koin_withdrawn"
     );
-    const amountToBurn = previousPoolState.koin - koinWithdrawn.value;
+    const amountToBurn = poolState.previous_koin - poolState.koin_withdrawn;
     if (amountToBurn > 0) {
+      System.require(
+        koinBalance >= amountToBurn,
+        "internal error: koin balance < amount to burn"
+      );
+
       new PoB().burn(
         new pob.burn_arguments(amountToBurn, this.contractId, this.contractId)
       );
@@ -180,11 +140,12 @@ export class Fogata extends Ownable {
 
     // reset koinWithdrawn counter, update previous pool state,
     // and set time for the next payment
-    this.koinWithdrawn.put(new common.uint64(0));
-    this.previousPoolState.put(poolState);
-    this.currentPaymentTime.put(nextPaymentTime);
-    nextPaymentTime.value += paymentPeriod;
-    this.nextPaymentTime.put(nextPaymentTime);
+    poolState.koin_withdrawn = 0;
+    poolState.current_payment_time = poolState.next_payment_time;
+    poolState.next_payment_time += paymentPeriod;
+    poolState.previous_koin = koinBalance;
+    poolState.previous_stake = poolState.stake;
+    this.poolState.put(poolState);
 
     return new common.boole(true);
   }
@@ -307,10 +268,9 @@ export class Fogata extends Ownable {
     const userStake = this.stakes.get(args.account!)!;
 
     const previousUserStake = this.previousStakes.get(args.account!)!;
-    const currentPaymentTime = this.currentPaymentTime.get()!;
-    if (previousUserStake.time < currentPaymentTime.value) {
+    if (previousUserStake.time < poolState.current_payment_time) {
       previousUserStake.stake = userStake.value;
-      previousUserStake.time = currentPaymentTime.value;
+      previousUserStake.time = poolState.current_payment_time;
       this.previousStakes.put(args.account!, previousUserStake);
     }
 
@@ -374,19 +334,16 @@ export class Fogata extends Ownable {
     // todo: division 0 when poolState.virtual = 0
 
     if (args.koin_amount > 0) {
-      const koinWithdrawn = this.koinWithdrawn.get()!;
       const previousUserStake = this.previousStakes.get(args.account!)!;
-      const currentPaymentTime = this.currentPaymentTime.get()!;
-      if (previousUserStake.time < currentPaymentTime.value) {
+      if (previousUserStake.time < poolState.current_payment_time) {
         previousUserStake.stake = userStake.value;
-        previousUserStake.time = currentPaymentTime.value;
+        previousUserStake.time = poolState.current_payment_time;
       }
-      const previousPoolState = this.previousPoolState.get()!;
 
       const maxKoin = multiplyAndDivide(
         previousUserStake.stake,
-        previousPoolState.koin,
-        previousPoolState.stake
+        poolState.previous_koin,
+        poolState.previous_stake
       );
       System.require(
         args.koin_amount <= maxKoin - previousUserStake.koin_withdrawn,
@@ -395,7 +352,7 @@ export class Fogata extends Ownable {
         } satoshis of koin for this period. Requested ${args.koin_amount}`
       );
       previousUserStake.koin_withdrawn += args.koin_amount;
-      koinWithdrawn.value += args.koin_amount;
+      poolState.koin_withdrawn += args.koin_amount;
 
       const transferStatus1 = this.getKoinContract().transfer(
         this.contractId,
@@ -404,7 +361,6 @@ export class Fogata extends Ownable {
       );
       System.require(transferStatus1 == true, "transfer of koins rejected");
       this.previousStakes.put(args.account!, previousUserStake);
-      this.koinWithdrawn.put(koinWithdrawn);
     }
 
     if (args.vhp_amount > 0) {
