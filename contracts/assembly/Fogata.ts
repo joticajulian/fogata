@@ -26,13 +26,15 @@ export class Fogata extends Ownable {
 
   // Previous state of the pool (snapshot)
 
-  previousStakes: Storage.Map<Uint8Array, common.uint64>;
+  previousStakes: Storage.Map<Uint8Array, fogata.previous_stake>;
 
   previousPoolState: Storage.Obj<fogata.pool_state>;
 
-  koinWithdrawn: Storage.Obj<common.uint64>;
+  currentPaymentTime: Storage.Obj<common.uint64>;
 
-  nextPayment: Storage.Obj<common.uint64>;
+  nextPaymentTime: Storage.Obj<common.uint64>;
+
+  koinWithdrawn: Storage.Obj<common.uint64>;
 
   constructor() {
     super();
@@ -64,9 +66,9 @@ export class Fogata extends Ownable {
     this.previousStakes = new Storage.Map(
       this.contractId,
       3,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
+      fogata.previous_stake.decode,
+      fogata.previous_stake.encode,
+      () => new fogata.previous_stake(0, 0, false)
     );
 
     this.previousPoolState = new Storage.Obj(
@@ -85,9 +87,17 @@ export class Fogata extends Ownable {
       () => new common.uint64(0)
     );
 
-    this.nextPayment = new Storage.Obj(
+    this.currentPaymentTime = new Storage.Obj(
       this.contractId,
       6,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
+    );
+
+    this.nextPaymentTime = new Storage.Obj(
+      this.contractId,
+      7,
       common.uint64.decode,
       common.uint64.encode,
       () => new common.uint64(0)
@@ -136,33 +146,23 @@ export class Fogata extends Ownable {
    */
   take_snapshot(): common.boole {
     const now = System.getBlockField("header.timestamp")!.uint64_value;
-    const nextPayment = this.nextPayment.get()!;
+    const nextPaymentTime = this.nextPaymentTime.get()!;
     const paymentPeriod = this.poolParams.get()!.payment_period;
     const poolState = this.poolState.get()!;
 
-    if (now < nextPayment.value) {
+    if (now < nextPaymentTime.value) {
       // it is not yet time to pay
       return new common.boole(false);
     }
 
-    if (nextPayment.value == 0) {
-      nextPayment.value = now + paymentPeriod;
-      this.nextPayment.put(nextPayment);
+    if (nextPaymentTime.value == 0) {
+      nextPaymentTime.value = now + paymentPeriod;
+      this.currentPaymentTime.put(now);
+      this.nextPaymentTime.put(nextPaymentTime);
       return new common.boole(false);
     }
 
     poolState.koin = this.getKoinContract().balanceOf(this.contractId);
-
-    // calculate the maximum amount of KOIN that each address
-    // can withdraw in the next period
-    let account = new Uint8Array(0);
-    while (true) {
-      const obj = this.stakes.getNext(account);
-      if (!obj) break;
-      account = obj.key!;
-      const userStake = obj.value;
-      this.previousStakes.put(account, userStake);
-    }
 
     // burn the amount that was not withdrawn in the previous period
     const koinWithdrawn = this.koinWithdrawn.get()!;
@@ -182,8 +182,9 @@ export class Fogata extends Ownable {
     // and set time for the next payment
     this.koinWithdrawn.put(new common.uint64(0));
     this.previousPoolState.put(poolState);
-    nextPayment.value += paymentPeriod;
-    this.nextPayment.put(nextPayment);
+    this.currentPaymentTime.put(nextPaymentTime);
+    nextPaymentTime.value += paymentPeriod;
+    this.nextPaymentTime.put(nextPaymentTime);
 
     return new common.boole(true);
   }
@@ -303,8 +304,17 @@ export class Fogata extends Ownable {
       // todo: division 0 when poolState.stake = 0
     }
 
-    // add new stake to the user
     const userStake = this.stakes.get(args.account!)!;
+
+    const previousUserStake = this.previousStakes.get(args.account!)!;
+    const currentPaymentTime = this.currentPaymentTime.get()!;
+    if (previousUserStake.time < currentPaymentTime.value) {
+      previousUserStake.stake = userStake.value;
+      previousUserStake.time = currentPaymentTime.value;
+      this.previousStakes.put(args.account!, previousUserStake);
+    }
+
+    // add new stake to the user
     userStake.value += deltaUserStake;
     this.stakes.put(args.account!, userStake);
 
@@ -361,29 +371,42 @@ export class Fogata extends Ownable {
       poolState.stake,
       poolState.virtual
     );
-
-    const userPreviousStake = this.previousStakes.get(args.account!)!;
-    const previousPoolState = this.previousPoolState.get()!;
-    const maxKoin = multiplyAndDivide(
-      userPreviousStake.value,
-      previousPoolState.koin,
-      previousPoolState.stake
-    );
-    // todo: division 0 when poolState.stake = 0
-
-    System.require(
-      args.koin_amount <= maxKoin,
-      `you can withdraw max ${maxKoin} satoshis of koin for this period. Requested ${args.koin_amount}`
-    );
+    // todo: division 0 when poolState.virtual = 0
 
     if (args.koin_amount > 0) {
+      const koinWithdrawn = this.koinWithdrawn.get()!;
+      const previousUserStake = this.previousStakes.get(args.account!)!;
+      const currentPaymentTime = this.currentPaymentTime.get()!;
+      if (previousUserStake.time < currentPaymentTime.value) {
+        previousUserStake.stake = userStake.value;
+        previousUserStake.time = currentPaymentTime.value;
+      }
+      const previousPoolState = this.previousPoolState.get()!;
+
+      const maxKoin = multiplyAndDivide(
+        previousUserStake.stake,
+        previousPoolState.koin,
+        previousPoolState.stake
+      );
+      System.require(
+        args.koin_amount <= maxKoin - previousUserStake.koin_withdrawn,
+        `you can withdraw max ${
+          maxKoin - previousUserStake.koin_withdrawn
+        } satoshis of koin for this period. Requested ${args.koin_amount}`
+      );
+      previousUserStake.koin_withdrawn += args.koin_amount;
+      koinWithdrawn.value += args.koin_amount;
+
       const transferStatus1 = this.getKoinContract().transfer(
         this.contractId,
         args.account!,
         args.koin_amount
       );
       System.require(transferStatus1 == true, "transfer of koins rejected");
+      this.previousStakes.put(args.account!, previousUserStake);
+      this.koinWithdrawn.put(koinWithdrawn);
     }
+
     if (args.vhp_amount > 0) {
       const transferStatus2 = this.getVhpContract().transfer(
         this.contractId,
