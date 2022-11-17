@@ -5,6 +5,8 @@ import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 import { multiplyAndDivide } from "./utils";
 
+const ONE_HUNDRED_PERCENT: u64 = 100000;
+
 export class Fogata extends Ownable {
   callArgs: System.getArgumentsReturn | null;
 
@@ -39,7 +41,7 @@ export class Fogata extends Ownable {
 
     this.poolState = new Storage.Obj(
       this.contractId,
-      2,
+      1,
       fogata.pool_state.decode,
       fogata.pool_state.encode,
       () => new fogata.pool_state(0, 0, 0)
@@ -47,7 +49,7 @@ export class Fogata extends Ownable {
 
     this.stakes = new Storage.Map(
       this.contractId,
-      1,
+      2,
       common.uint64.decode,
       common.uint64.encode,
       () => new common.uint64(0)
@@ -181,11 +183,11 @@ export class Fogata extends Ownable {
     let totalFeesCollected: u64 = 0;
     for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
       const beneficiary = poolParams.beneficiaries[i];
-      // fee = deltaPoolVirtual * beneficiary.percentage / 1e5
+      // fee = deltaPoolVirtual * beneficiary.percentage / ONE_HUNDRED_PERCENT
       const fee = multiplyAndDivide(
         deltaPoolVirtual,
         beneficiary.percetage,
-        1e5 as u64
+        ONE_HUNDRED_PERCENT
       );
       if (fee > 0) {
         const statusTransfer = this.getKoinContract().transfer(
@@ -215,13 +217,16 @@ export class Fogata extends Ownable {
       "either koin amount or vhp amount must be greater than 0"
     );
 
+    // get pool state, user stake, and virtual amount to deposit
     const poolState = this.poolState.get()!;
+    const userStake = this.stakes.get(args.account!)!;
+    const deltaUserVirtual = args.koin_amount + args.vhp_amount;
 
-    // distribute pending payments and get the virtual balance
+    // distribute pending payments and update the virtual balance
     // before making the transfer
     poolState.virtual = this.payBeneficiaries(poolState.virtual);
 
-    // burn KOINs in the same account to get VHP
+    // burn KOINs in the same account to convert it to VHP
     if (args.koin_amount > 0) {
       new PoB().burn(
         new pob.burn_arguments(args.koin_amount, args.account, args.account)
@@ -229,7 +234,6 @@ export class Fogata extends Ownable {
     }
 
     // transfer all VHP to the pool
-    const deltaUserVirtual = args.koin_amount + args.vhp_amount;
     const transferStatus = this.getVhpContract().transfer(
       args.account!,
       this.contractId,
@@ -265,8 +269,8 @@ export class Fogata extends Ownable {
       // todo: division 0 when poolState.stake = 0
     }
 
-    const userStake = this.stakes.get(args.account!)!;
-
+    // update the previous stake of the user if it is not in the
+    // current window of koin payments
     const previousUserStake = this.previousStakes.get(args.account!)!;
     if (previousUserStake.time < poolState.current_payment_time) {
       previousUserStake.stake = userStake.value;
@@ -286,7 +290,12 @@ export class Fogata extends Ownable {
     System.event(
       "fogata.stake",
       Protobuf.encode(
-        new fogata.stake_event(args.account!, deltaUserVirtual, deltaUserStake),
+        new fogata.stake_event(
+          args.account!,
+          args.koin_amount,
+          args.vhp_amount,
+          deltaUserStake
+        ),
         fogata.stake_event.encode
       ),
       [args.account!]
@@ -299,13 +308,19 @@ export class Fogata extends Ownable {
    * @external
    */
   unstake(args: fogata.stake_args): common.boole {
+    System.require(
+      args.koin_amount > 0 || args.vhp_amount > 0,
+      "either koin amount or vhp amount must be greater than 0"
+    );
+
+    // get pool state, user stake, and virtual amount to withdraw
     const poolState = this.poolState.get()!;
-
-    // distribute pending payments and get the virtual balance
-    poolState.virtual = this.payBeneficiaries(poolState.virtual);
-
-    // get current stake of the user
     const userStake = this.stakes.get(args.account!)!;
+    const deltaUserVirtual = args.koin_amount + args.vhp_amount;
+
+    // distribute pending payments and update the virtual balance
+    // before making the transfer
+    poolState.virtual = this.payBeneficiaries(poolState.virtual);
 
     // calculate virtual amount of the user
     //
@@ -319,7 +334,6 @@ export class Fogata extends Ownable {
     );
     // todo: division 0 when poolState.stake = 0
 
-    const deltaUserVirtual = args.koin_amount + args.vhp_amount;
     System.require(
       userVirtual >= deltaUserVirtual,
       "insufficient virtual balance"
@@ -334,7 +348,12 @@ export class Fogata extends Ownable {
     // todo: division 0 when poolState.virtual = 0
 
     if (args.koin_amount > 0) {
+      // the maximum amount of koin to withdraw is calculated from
+      // the previous snapshot of koin balances
       const previousUserStake = this.previousStakes.get(args.account!)!;
+
+      // update the previous stake of the user if it is not in the
+      // current window of koin payments
       if (previousUserStake.time < poolState.current_payment_time) {
         previousUserStake.stake = userStake.value;
         previousUserStake.time = poolState.current_payment_time;
@@ -384,7 +403,12 @@ export class Fogata extends Ownable {
     System.event(
       "fogata.unstake",
       Protobuf.encode(
-        new fogata.stake_event(args.account!, deltaUserVirtual, deltaUserStake),
+        new fogata.stake_event(
+          args.account!,
+          args.koin_amount,
+          args.vhp_amount,
+          deltaUserStake
+        ),
         fogata.stake_event.encode
       ),
       [args.account!]
