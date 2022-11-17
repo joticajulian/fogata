@@ -87,6 +87,7 @@ export class Fogata extends Ownable {
       this.only_owner(),
       "owner has not authorized to update params"
     );
+    // todo: check max percentage
     this.poolParams.put(args);
     System.event("fogata.set_pool_params", this.callArgs!.args, []);
     return new common.boole(true);
@@ -265,8 +266,9 @@ export class Fogata extends Ownable {
         deltaUserVirtual,
         poolState.stake,
         poolState.virtual
+        // division by 0 ? no because poolState.stake > 0, then
+        // poolState.virtual should be greater than 0 as well
       );
-      // todo: division 0 when poolState.stake = 0
     }
 
     // update the previous stake of the user if it is not in the
@@ -322,6 +324,8 @@ export class Fogata extends Ownable {
     // before making the transfer
     poolState.virtual = this.payBeneficiaries(poolState.virtual);
 
+    System.require(poolState.stake > 0, "there is no stake in the pool");
+
     // calculate virtual amount of the user
     //
     // note: same maths applied as in the stake function. Check there
@@ -332,7 +336,6 @@ export class Fogata extends Ownable {
       poolState.virtual,
       poolState.stake
     );
-    // todo: division 0 when poolState.stake = 0
 
     System.require(
       userVirtual >= deltaUserVirtual,
@@ -344,8 +347,8 @@ export class Fogata extends Ownable {
       deltaUserVirtual,
       poolState.stake,
       poolState.virtual
+      // division by 0 ? no because userVirtual > 0, then poolState.virtual > 0
     );
-    // todo: division 0 when poolState.virtual = 0
 
     if (args.koin_amount > 0) {
       // the maximum amount of koin to withdraw is calculated from
@@ -359,11 +362,14 @@ export class Fogata extends Ownable {
         previousUserStake.time = poolState.current_payment_time;
       }
 
-      const maxKoin = multiplyAndDivide(
-        previousUserStake.stake,
-        poolState.previous_koin,
-        poolState.previous_stake
-      );
+      const maxKoin =
+        poolState.previous_stake == 0
+          ? 0
+          : multiplyAndDivide(
+              previousUserStake.stake,
+              poolState.previous_koin,
+              poolState.previous_stake
+            );
       System.require(
         args.koin_amount <= maxKoin - previousUserStake.koin_withdrawn,
         `you can withdraw max ${
