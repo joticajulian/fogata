@@ -87,7 +87,15 @@ export class Fogata extends Ownable {
       this.only_owner(),
       "owner has not authorized to update params"
     );
-    // todo: check max percentage
+    let totalPercentage: u32 = 0;
+    for (let i = 0; i < args.beneficiaries.length; i += 1) {
+      totalPercentage += args.beneficiaries[i].percetage;
+      System.require(
+        args.beneficiaries[i].percetage < ONE_HUNDRED_PERCENT &&
+          totalPercentage < ONE_HUNDRED_PERCENT,
+        "the percentages for beneficiaries exceeded 100%"
+      );
+    }
     this.poolParams.put(args);
     System.event("fogata.set_pool_params", this.callArgs!.args, []);
     return new common.boole(true);
