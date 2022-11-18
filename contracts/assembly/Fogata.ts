@@ -1,4 +1,13 @@
-import { System, Storage, pob, Token, Protobuf } from "@koinos/sdk-as";
+import {
+  System,
+  Storage,
+  Arrays,
+  pob,
+  Token,
+  Protobuf,
+  authority,
+  Base58,
+} from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { Ownable } from "./Ownable";
 import { fogata } from "./proto/fogata";
@@ -76,6 +85,25 @@ export class Fogata extends Ownable {
       this.vhpContract = new Token(System.getContractAddress("vhp"));
     }
     return this.vhpContract!;
+  }
+
+  validateAuthority(account: Uint8Array): void {
+    const caller = System.getCaller().caller;
+    /**
+     * the authority is validated if this contract is called by the
+     * account's contract, or if the account authorizes this
+     * contract call (by checking the signature or by calling the
+     * account's contract)
+     */
+    System.require(
+      Arrays.equal(account, caller) ||
+        System.checkAuthority(
+          authority.authorization_type.contract_call,
+          account,
+          this.callArgs!.args
+        ),
+      `${Base58.encode(account)} has not authorized the operation`
+    );
   }
 
   /**
@@ -226,6 +254,8 @@ export class Fogata extends Ownable {
       "either koin amount or vhp amount must be greater than 0"
     );
 
+    this.validateAuthority(args.account!);
+
     // get pool state, user stake, and virtual amount to deposit
     const poolState = this.poolState.get()!;
     const userStake = this.stakes.get(args.account!)!;
@@ -322,6 +352,8 @@ export class Fogata extends Ownable {
       args.koin_amount > 0 || args.vhp_amount > 0,
       "either koin amount or vhp amount must be greater than 0"
     );
+
+    this.validateAuthority(args.account!);
 
     // get pool state, user stake, and virtual amount to withdraw
     const poolState = this.poolState.get()!;
