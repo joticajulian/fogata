@@ -87,11 +87,15 @@ export class Fogata extends Ownable {
     return this.vhpContract!;
   }
 
+  /**
+   * Internal function to validate if an account has authorized
+   * to perform the operation
+   */
   validateAuthority(account: Uint8Array): void {
     const caller = System.getCaller().caller;
     /**
-     * the authority is validated if this contract is called by the
-     * account's contract, or if the account authorizes this
+     * the authority is successful if this contract is called by the
+     * account's contract (caller), or if the account authorizes this
      * contract call (by checking the signature or by calling the
      * account's contract)
      */
@@ -107,90 +111,7 @@ export class Fogata extends Ownable {
   }
 
   /**
-   * Set mining pool parameters
-   * @external
-   */
-  set_pool_params(args: fogata.pool_params): common.boole {
-    System.require(
-      this.only_owner(),
-      "owner has not authorized to update params"
-    );
-    let totalPercentage: u32 = 0;
-    for (let i = 0; i < args.beneficiaries.length; i += 1) {
-      totalPercentage += args.beneficiaries[i].percetage;
-      System.require(
-        args.beneficiaries[i].percetage < ONE_HUNDRED_PERCENT &&
-          totalPercentage < ONE_HUNDRED_PERCENT,
-        "the percentages for beneficiaries exceeded 100%"
-      );
-    }
-    this.poolParams.put(args);
-    System.event("fogata.set_pool_params", this.callArgs!.args, []);
-    return new common.boole(true);
-  }
-
-  /**
-   * Get mining pool parameters
-   * @external
-   * @readonly
-   */
-  get_pool_params(): fogata.pool_params {
-    return this.poolParams.get()!;
-  }
-
-  /**
-   * Function to take snapshot of koin balances
-   */
-  take_snapshot(): common.boole {
-    const now = System.getBlockField("header.timestamp")!.uint64_value;
-    const poolState = this.poolState.get()!;
-    const paymentPeriod = this.poolParams.get()!.payment_period;
-
-    if (now < poolState.next_payment_time) {
-      // it is not yet time to pay
-      return new common.boole(false);
-    }
-
-    if (poolState.next_payment_time == 0) {
-      poolState.current_payment_time = now;
-      poolState.next_payment_time = now + paymentPeriod;
-      this.poolState.put(poolState);
-      return new common.boole(false);
-    }
-
-    const koinBalance = this.getKoinContract().balanceOf(this.contractId);
-
-    // burn the amount that was not withdrawn in the previous period
-    System.require(
-      poolState.previous_koin >= poolState.koin_withdrawn,
-      "internal error: poolState.previous_koin < poolState.koin_withdrawn"
-    );
-    const amountToBurn = poolState.previous_koin - poolState.koin_withdrawn;
-    if (amountToBurn > 0) {
-      System.require(
-        koinBalance >= amountToBurn,
-        "internal error: koin balance < amount to burn"
-      );
-
-      new PoB().burn(
-        new pob.burn_arguments(amountToBurn, this.contractId, this.contractId)
-      );
-    }
-
-    // reset koinWithdrawn counter, update previous pool state,
-    // and set time for the next payment
-    poolState.koin_withdrawn = 0;
-    poolState.current_payment_time = poolState.next_payment_time;
-    poolState.next_payment_time += paymentPeriod;
-    poolState.previous_koin = koinBalance;
-    poolState.previous_stake = poolState.stake;
-    this.poolState.put(poolState);
-
-    return new common.boole(true);
-  }
-
-  /**
-   * Function to update the fees distributed to beneficiaries
+   * Internal function to update the fees distributed to beneficiaries
    * (like node operator or sponsors program) based on the
    * virtual balance of the pool.
    *
@@ -242,6 +163,91 @@ export class Fogata extends Ownable {
 
     // calculate the new virtual balance of the pool
     return poolVirtual - totalFeesCollected;
+  }
+
+  /**
+   * Set mining pool parameters
+   * @external
+   */
+  set_pool_params(args: fogata.pool_params): common.boole {
+    System.require(
+      this.only_owner(),
+      "owner has not authorized to update params"
+    );
+    let totalPercentage: u32 = 0;
+    for (let i = 0; i < args.beneficiaries.length; i += 1) {
+      totalPercentage += args.beneficiaries[i].percetage;
+      System.require(
+        args.beneficiaries[i].percetage < ONE_HUNDRED_PERCENT &&
+          totalPercentage < ONE_HUNDRED_PERCENT,
+        "the percentages for beneficiaries exceeded 100%"
+      );
+    }
+    this.poolParams.put(args);
+    System.event("fogata.set_pool_params", this.callArgs!.args, []);
+    return new common.boole(true);
+  }
+
+  /**
+   * Get mining pool parameters
+   * @external
+   * @readonly
+   */
+  get_pool_params(): fogata.pool_params {
+    return this.poolParams.get()!;
+  }
+
+  /**
+   * Function to be called periodically by anyone to define the
+   * distribution of Koins during the next period
+   * @external
+   */
+  compute_koin_balances(): common.boole {
+    const now = System.getBlockField("header.timestamp")!.uint64_value;
+    const poolState = this.poolState.get()!;
+    const paymentPeriod = this.poolParams.get()!.payment_period;
+
+    if (now < poolState.next_payment_time) {
+      // it is not yet time to pay
+      return new common.boole(false);
+    }
+
+    if (poolState.next_payment_time == 0) {
+      poolState.current_payment_time = now;
+      poolState.next_payment_time = now + paymentPeriod;
+      this.poolState.put(poolState);
+      return new common.boole(false);
+    }
+
+    const koinBalance = this.getKoinContract().balanceOf(this.contractId);
+
+    // burn the amount that was not withdrawn in the previous period
+    System.require(
+      poolState.previous_koin >= poolState.koin_withdrawn,
+      "internal error: poolState.previous_koin < poolState.koin_withdrawn"
+    );
+    const amountToBurn = poolState.previous_koin - poolState.koin_withdrawn;
+    if (amountToBurn > 0) {
+      System.require(
+        koinBalance >= amountToBurn,
+        "internal error: koin balance < amount to burn"
+      );
+
+      new PoB().burn(
+        new pob.burn_arguments(amountToBurn, this.contractId, this.contractId)
+      );
+    }
+
+    // reset koinWithdrawn counter, update previous pool state,
+    // and set time for the next payment
+    poolState.koin_withdrawn = 0;
+    poolState.current_payment_time = poolState.next_payment_time;
+    poolState.next_payment_time += paymentPeriod;
+    poolState.previous_koin = koinBalance;
+    poolState.previous_stake = poolState.stake;
+    this.poolState.put(poolState);
+
+    return new common.boole(true);
   }
 
   /**
