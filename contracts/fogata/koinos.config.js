@@ -1,5 +1,5 @@
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, "../.env") });
+require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 
 module.exports = {
   class: "Fogata",
@@ -11,10 +11,10 @@ module.exports = {
   files: ["./Fogata.ts", "./IPoB.ts", "./Ownable.ts"],
   sourceDir: "./assembly",
   buildDir: "./build",
-  koinosProtoDir: "../node_modules/koinos-precompiler-as/koinos-proto",
+  koinosProtoDir: "../../node_modules/koinos-precompiler-as/koinos-proto",
   networks: {
     harbinger: {
-      rpcNodes: ["https://harbinger-api.koinos.io"],
+      rpcNodes: ["https://testnet.koinosblocks.com", "https://harbinger-api.koinos.io"],
       accounts: {
         manaSupporter: {
           privateKey: process.env.HARBINGER_PRIVATE_KEY_MANA_SUPPORTER,
@@ -28,7 +28,7 @@ module.exports = {
       },
     },
     mainnet: {
-      rpcNodes: ["https://api.koinos.io", "https://api.koinosblocks.com"],
+      rpcNodes: ["https://api.koinosblocks.com", "https://api.koinos.io"],
     },
   },
 };

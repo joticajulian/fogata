@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package common;
+
+import "koinos/options.proto";
+
+message boole {
+    bool value = 1;
+}
+
+message uint64 {
+    uint64 value = 1 [jstype = JS_STRING];
+}
+
+message address {
+    bytes account = 1 [(koinos.btype) = ADDRESS];
+}

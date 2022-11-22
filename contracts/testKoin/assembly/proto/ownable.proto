@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package ownable;
+
+import "koinos/options.proto";
+
+message owner {
+   bytes account = 1 [(koinos.btype) = ADDRESS];
+}

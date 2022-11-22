@@ -27,12 +27,18 @@
     "yaml": "^2.1.3"
   },
   "scripts": {
-    "asbuild:debug": "asc contracts/build/index.ts --config contracts/asconfig.json --use abort= --target debug",
-    "asbuild:release": "asc contracts/build/index.ts --config contracts/asconfig.json --use abort= --target release",
+    "asbuild:debug": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target debug",
+    "asbuild:release": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target release",
     "build": "yarn precompile && yarn asbuild:release",
-    "precompile": "koinos-precompiler-as contracts",
-    "test": "asp --verbose --config contracts/as-pect.config.js",
-    "deploy": "ts-node contracts/scripts/deployment.ts",
+    "precompile": "koinos-precompiler-as contracts/fogata",
+    "test": "asp --verbose --config contracts/fogata/as-pect.config.js",
+    "deploy": "ts-node contracts/fogata/scripts/deployment.ts",
+    "testKoin:asbuild:debug": "asc contracts/testKoin/build/index.ts --config contracts/testKoin/asconfig.json --use abort= --target debug",
+    "testKoin:asbuild:release": "asc contracts/testKoin/build/index.ts --config contracts/testKoin/asconfig.json --use abort= --target release",
+    "testKoin:build": "yarn testKoin:precompile && yarn testKoin:asbuild:release",
+    "testKoin:precompile": "koinos-precompiler-as contracts/testKoin",
+    "testKoin:test": "asp --verbose --config contracts/testKoin/as-pect.config.js",
+    "testKoin:deploy": "ts-node contracts/testKoin/scripts/deployment.ts",
     "lint": "eslint --max-warnings 0 --ext ts \"*/assembly/**/*.ts\"",
     "postinstall": "patch-package"
   },
