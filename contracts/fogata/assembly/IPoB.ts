@@ -21,6 +21,7 @@ export class PoB {
       }`;
       System.exit(callRes.code, StringBytes.stringToBytes(errorMessage));
     }
+    if (!callRes.res.object) return new pob.burn_result();
     return Protobuf.decode<pob.burn_result>(
       callRes.res.object!,
       pob.burn_result.decode

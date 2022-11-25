@@ -1,0 +1,20 @@
+diff --git a/node_modules/@koinos/sdk-as/assembly/util/token.ts b/node_modules/@koinos/sdk-as/assembly/util/token.ts
+index ae4d486..1f21980 100644
+--- a/node_modules/@koinos/sdk-as/assembly/util/token.ts
++++ b/node_modules/@koinos/sdk-as/assembly/util/token.ts
+@@ -97,6 +97,7 @@ export class Token {
+ 
+     const callRes = System.call(this._contractId, entries.total_supply_entry, Protobuf.encode(args, token.total_supply_arguments.encode));
+     System.require(callRes.code == 0, "failed to retrieve token supply");
++    if(!callRes.res.object) return 0;
+     const res = Protobuf.decode<token.total_supply_result>(callRes.res.object as Uint8Array, token.total_supply_result.decode);
+ 
+     return res.value;
+@@ -118,6 +119,7 @@ export class Token {
+ 
+     const callRes = System.call(this._contractId, entries.balance_of_entry, Protobuf.encode(args, token.balance_of_arguments.encode));
+     System.require(callRes.code == 0, "failed to retrieve token balance");
++    if(!callRes.res.object) return 0;
+     const res = Protobuf.decode<token.balance_of_result>(callRes.res.object as Uint8Array, token.balance_of_result.decode);
+ 
+     return res.value;
