@@ -8,10 +8,11 @@ import koinosConfig from "../koinos.config.js";
 
 dotenv.config();
 
-const [networkName] = process.argv.slice(2);
+const [inputNetworkName] = process.argv.slice(2);
 
 async function main() {
-  const network = koinosConfig.networks[networkName || "harbinger"];
+  const networkName = inputNetworkName || "harbinger";
+  const network = koinosConfig.networks[networkName];
   if (!network) throw new Error(`network ${networkName} not found`);
   const provider = new Provider(network.rpcNodes);
   const accountWithFunds = Signer.fromWif(
@@ -78,7 +79,7 @@ async function main() {
   console.log(receipt);
   const { blockNumber } = await transaction.wait("byBlock", 60000);
   console.log(
-    `Contract ${contractAccount.address} uploaded in block number ${blockNumber}`
+    `Contract ${contractAccount.address} uploaded in block number ${blockNumber} (${networkName})`
   );
 }
 
