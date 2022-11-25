@@ -23,9 +23,14 @@ message previous_stake {
    uint64 koin_withdrawn = 3;
 }
 
+message balance {
+   uint64 koin_amount = 1 [jstype = JS_STRING];
+   uint64 vhp_amount = 2 [jstype = JS_STRING];
+}
+
 message beneficiary {
    bytes address = 1 [(koinos.btype) = ADDRESS];
-   uint32 percetage = 2; // all percentages use 3 decimals (1000 => 1%)
+   uint32 percentage = 2; // all percentages use 3 decimals (1000 => 1%)
 }
 
 message pool_params {

@@ -73,6 +73,17 @@ export class Fogata extends Ownable {
     );
   }
 
+  /**
+   * Authorize function
+   * @external
+   */
+  authorize(args: authority.authorize_arguments): common.boole {
+    // TODO: return false for all cases
+    // return new common.boole(false);
+    System.require(this.only_owner(), "not authorized by the owner");
+    return new common.boole(true);
+  }
+
   getKoinContract(): Token {
     if (!this.koinContract) {
       this.koinContract = new Token(System.getContractAddress("koin"));
@@ -93,12 +104,10 @@ export class Fogata extends Ownable {
    */
   validateAuthority(account: Uint8Array): void {
     const caller = System.getCaller().caller;
-    /**
-     * the authority is successful if this contract is called by the
-     * account's contract (caller), or if the account authorizes this
-     * contract call (by checking the signature or by calling the
-     * account's contract)
-     */
+    // the authority is successful if this contract is called by the
+    // account's contract (caller), or if the account authorizes this
+    // contract call (by checking the signature or by calling the
+    // account's contract)
     System.require(
       Arrays.equal(account, caller) ||
         System.checkAuthority(
@@ -123,7 +132,7 @@ export class Fogata extends Ownable {
    * to it. So, the poolState must be updated outside of this
    * function.
    */
-  payBeneficiaries(lastPoolVirtual: u64): u64 {
+  payBeneficiaries(lastPoolVirtual: u64, readonly: boolean = false): u64 {
     // get the virtual balance of pool
     const poolVirtual =
       this.getKoinContract().balanceOf(this.contractId) +
@@ -144,10 +153,10 @@ export class Fogata extends Ownable {
       // fee = deltaPoolVirtual * beneficiary.percentage / ONE_HUNDRED_PERCENT
       const fee = multiplyAndDivide(
         deltaPoolVirtual,
-        beneficiary.percetage,
+        beneficiary.percentage,
         ONE_HUNDRED_PERCENT
       );
-      if (fee > 0) {
+      if (fee > 0 && !readonly) {
         const statusTransfer = this.getKoinContract().transfer(
           this.contractId,
           beneficiary.address!,
@@ -157,8 +166,8 @@ export class Fogata extends Ownable {
           statusTransfer == true,
           `transfer to beneficiary number ${i} was rejected`
         );
-        totalFeesCollected += fee;
       }
+      totalFeesCollected += fee;
     }
 
     // calculate the new virtual balance of the pool
@@ -176,9 +185,9 @@ export class Fogata extends Ownable {
     );
     let totalPercentage: u32 = 0;
     for (let i = 0; i < args.beneficiaries.length; i += 1) {
-      totalPercentage += args.beneficiaries[i].percetage;
+      totalPercentage += args.beneficiaries[i].percentage;
       System.require(
-        args.beneficiaries[i].percetage < ONE_HUNDRED_PERCENT &&
+        args.beneficiaries[i].percentage < ONE_HUNDRED_PERCENT &&
           totalPercentage < ONE_HUNDRED_PERCENT,
         "the percentages for beneficiaries exceeded 100%"
       );
@@ -248,6 +257,38 @@ export class Fogata extends Ownable {
     this.poolState.put(poolState);
 
     return new common.boole(true);
+  }
+
+  /**
+   * koin/vhp balance of an account
+   * @external
+   * @readonly
+   */
+  balance_of(args: common.address): fogata.balance {
+    const poolState = this.poolState.get()!;
+    const userStake = this.stakes.get(args.account!)!;
+    poolState.virtual = this.payBeneficiaries(poolState.virtual, true);
+    const userVirtual = multiplyAndDivide(
+      userStake.value,
+      poolState.virtual,
+      poolState.stake
+    );
+
+    const previousUserStake = this.previousStakes.get(args.account!)!;
+    if (previousUserStake.time < poolState.current_payment_time) {
+      previousUserStake.stake = userStake.value;
+      previousUserStake.time = poolState.current_payment_time;
+    }
+
+    const maxKoin =
+      poolState.previous_stake == 0
+        ? 0
+        : multiplyAndDivide(
+            previousUserStake.stake,
+            poolState.previous_koin,
+            poolState.previous_stake
+          );
+    return new fogata.balance(maxKoin, userVirtual - maxKoin);
   }
 
   /**
