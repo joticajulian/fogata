@@ -14,8 +14,12 @@ async function main() {
   const network = koinosConfig.networks[networkName || "harbinger"];
   if (!network) throw new Error(`network ${networkName} not found`);
   const provider = new Provider(network.rpcNodes);
-  const accountWithFunds = Signer.fromWif(network.accounts.manaSupporter.privateKey);
-  const contractOwner = Signer.fromWif(network.accounts.contractOwner.privateKey);
+  const accountWithFunds = Signer.fromWif(
+    network.accounts.manaSupporter.privateKey
+  );
+  const contractOwner = Signer.fromWif(
+    network.accounts.contractOwner.privateKey
+  );
   const contractAccount = Signer.fromWif(network.accounts.contract.privateKey);
   accountWithFunds.provider = provider;
   contractAccount.provider = provider;

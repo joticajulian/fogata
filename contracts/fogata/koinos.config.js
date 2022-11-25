@@ -14,7 +14,10 @@ module.exports = {
   koinosProtoDir: "../../node_modules/koinos-precompiler-as/koinos-proto",
   networks: {
     harbinger: {
-      rpcNodes: ["https://testnet.koinosblocks.com", "https://harbinger-api.koinos.io"],
+      rpcNodes: [
+        "https://harbinger-api.koinos.io",
+        "https://testnet.koinosblocks.com",
+      ],
       accounts: {
         manaSupporter: {
           privateKey: process.env.HARBINGER_PRIVATE_KEY_MANA_SUPPORTER,
