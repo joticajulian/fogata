@@ -78,7 +78,29 @@ export class Fogata extends Ownable {
    * @external
    */
   authorize(args: authority.authorize_arguments): common.boole {
-    // TODO: return false for all cases
+    if (args.type == authority.authorization_type.contract_call) {
+      if (
+        !Arrays.equal(args.call!.contract_id, System.getContractAddress("pob"))
+      ) {
+        System.log(
+          `authorize function can only be called from PoB contract (current call from ${Base58.encode(
+            args.call!.contract_id!
+          )})`
+        );
+        return new common.boole(false);
+      }
+      if (args.call!.entry_point != 0x53192be1) {
+        System.log("only calls to register_public_key method are authorized");
+        return new common.boole(false);
+      }
+      if (!this.only_owner()) {
+        System.log("not authorized by the owner");
+        return new common.boole(false);
+      }
+      return new common.boole(true);
+    }
+
+    // TODO: return false for the rest of the cases
     // return new common.boole(false);
     System.require(this.only_owner(), "not authorized by the owner");
     return new common.boole(true);
