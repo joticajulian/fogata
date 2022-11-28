@@ -55,12 +55,15 @@ async function main() {
   const { operation: setPoolParams } = await contract.functions.set_pool_params(
     {
       name: "fogata",
-      image: "https://cdn.pixabay.com/photo/2012/04/12/19/11/fire-30231_1280.png",
+      image:
+        "https://cdn.pixabay.com/photo/2012/04/12/19/11/fire-30231_1280.png",
       description: "koinos mining pool",
-      beneficiaries: [{
-        address: "1PobYVhBQkTKcjH1fKUap5ZKcGYKHByapT",
-        percentage: 20000,
-      }],
+      beneficiaries: [
+        {
+          address: "1PobYVhBQkTKcjH1fKUap5ZKcGYKHByapT",
+          percentage: 20000,
+        },
+      ],
       payment_period: "604800000", // 1 week
     },
     {
