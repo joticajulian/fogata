@@ -18,7 +18,8 @@ export function multiplyAndDivide(
   return (
     // @ts-ignore
     (
-      (u128.fromU64(multiplier1) * u128.fromU64(multiplier2) + div / 2) /
+      (u128.fromU64(multiplier1) * u128.fromU64(multiplier2) +
+        div / u128.from(2)) /
       div
     ).toU64()
   );
