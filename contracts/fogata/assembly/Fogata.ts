@@ -9,25 +9,17 @@ import {
   Base58,
 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
-import { Ownable } from "./Ownable";
+import { ConfigurablePool, ONE_HUNDRED_PERCENT } from "./ConfigurablePool";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 import { multiplyAndDivide } from "./utils";
 
-const ONE_HUNDRED_PERCENT: u64 = 100000;
-
-export class Fogata extends Ownable {
+export class Fogata extends ConfigurablePool {
   callArgs: System.getArgumentsReturn | null;
 
   // System contracts
 
-  koinContract: Token | null;
-
   vhpContract: Token | null;
-
-  // Configuration
-
-  poolParams: Storage.Obj<fogata.pool_params>;
 
   // State of the pool
 
@@ -41,20 +33,8 @@ export class Fogata extends Ownable {
 
   balancesBeneficiaries: Storage.Map<Uint8Array, common.uint64>;
 
-  balancesManaSupporters: Storage.Map<Uint8Array, common.uint64>;
-
-  reservedKoins: Storage.Obj<common.uint64>;
-
   constructor() {
     super();
-
-    this.poolParams = new Storage.Obj(
-      this.contractId,
-      0,
-      fogata.pool_params.decode,
-      fogata.pool_params.encode,
-      () => new fogata.pool_params()
-    );
 
     this.poolState = new Storage.Obj(
       this.contractId,
@@ -83,22 +63,6 @@ export class Fogata extends Ownable {
     this.balancesBeneficiaries = new Storage.Map(
       this.contractId,
       4,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
-    );
-
-    this.balancesManaSupporters = new Storage.Map(
-      this.contractId,
-      5,
-      common.uint64.decode,
-      common.uint64.encode,
-      () => new common.uint64(0)
-    );
-
-    this.reservedKoins = new Storage.Obj(
-      this.contractId,
-      6,
       common.uint64.decode,
       common.uint64.encode,
       () => new common.uint64(0)
@@ -138,57 +102,11 @@ export class Fogata extends Ownable {
     return new common.boole(true);
   }
 
-  getKoinContract(): Token {
-    if (!this.koinContract) {
-      this.koinContract = new Token(System.getContractAddress("koin"));
-    }
-    return this.koinContract!;
-  }
-
   getVhpContract(): Token {
     if (!this.vhpContract) {
       this.vhpContract = new Token(System.getContractAddress("vhp"));
     }
     return this.vhpContract!;
-  }
-
-  /**
-   * Internal function to validate if an account has authorized
-   * to perform the operation
-   */
-  validateAuthority(account: Uint8Array): void {
-    const caller = System.getCaller().caller;
-    // the authority is successful if this contract is called by the
-    // account's contract (caller), or if the account authorizes this
-    // contract call (by checking the signature or by calling the
-    // account's contract)
-    System.require(
-      Arrays.equal(account, caller) ||
-        System.checkAuthority(
-          authority.authorization_type.contract_call,
-          account,
-          this.callArgs!.args
-        ),
-      `${Base58.encode(account)} has not authorized the operation`
-    );
-  }
-
-  /**
-   * Get reserved koins (beneficiaries and mana supporters)
-   * @external
-   * @readonly
-   */
-  get_reserved_koins(): common.uint64 {
-    return this.reservedKoins.get()!;
-  }
-
-  /**
-   * Get koin balance of mana supporter
-   * @external
-   * @readonly
-   */
-  get_mana_support(args: common.address): common.uint64 {
-    return this.balancesManaSupporters.get(args.account!)!;
   }
 
   /**
@@ -198,64 +116,6 @@ export class Fogata extends Ownable {
    */
   get_beneficiary_balance(args: common.address): common.uint64 {
     return this.balancesBeneficiaries.get(args.account!)!;
-  }
-
-  /**
-   * Transfer KOINs to the pool to support the mana consumption.
-   * This amount will not be burned
-   * @external
-   */
-  add_mana_support(args: fogata.koin_account): common.boole {
-    const balance = this.balancesManaSupporters.get(args.account!)!;
-    const reservedKoins = this.reservedKoins.get()!;
-
-    System.require(
-      this.getKoinContract().transfer(
-        args.account!,
-        this.contractId,
-        args.koin_amount
-      ),
-      "transfer rejected"
-    );
-
-    balance.value += args.koin_amount;
-    reservedKoins.value += args.koin_amount;
-    this.balancesManaSupporters.put(args.account!, balance);
-    this.reservedKoins.put(reservedKoins);
-
-    System.event("fogata.add_mana_support", this.callArgs!.args, [
-      args.account!,
-    ]);
-    return new common.boole(true);
-  }
-
-  /**
-   * Withdraw KOINs used in the mana consumption.
-   * @external
-   */
-  remove_mana_support(args: fogata.koin_account): common.boole {
-    const balance = this.balancesManaSupporters.get(args.account!)!;
-    const reservedKoins = this.reservedKoins.get()!;
-
-    System.require(balance.value >= args.koin_amount, "insufficient balance");
-    System.require(
-      this.getKoinContract().transfer(
-        this.contractId,
-        args.account!,
-        args.koin_amount
-      ),
-      "transfer rejected"
-    );
-
-    balance.value -= args.koin_amount;
-    reservedKoins.value -= args.koin_amount;
-    this.balancesManaSupporters.put(args.account!, balance);
-    this.reservedKoins.put(reservedKoins);
-
-    System.event("fogata.remove_mana_support", this.callArgs!.args, [
-      args.account!,
-    ]);
-    return new common.boole(true);
   }
 
   /**
@@ -299,18 +159,17 @@ export class Fogata extends Ownable {
    * twice, the second call will not have effect because the
    * fees will be already taken.
    *
-   * Note: this function doesn't update the storage to reduce calls
-   * to it. So, the poolState must be updated outside of this
-   * function.
+   * Note: this function doesn't update the poolState to reduce
+   * calls to the storage. So, the poolState must be updated
+   * outside of this function.
    */
-  payBeneficiaries(lastPoolVirtual: u64, readonly: boolean = false): u64 {
+  refreshBalances(lastPoolVirtual: u64, readonly: boolean = false): u64 {
     const reservedKoins = this.reservedKoins.get()!;
 
     // get the virtual balance of pool
     const poolVirtual =
-      this.getKoinContract().balanceOf(this.contractId) +
-      this.getVhpContract().balanceOf(this.contractId) -
-      reservedKoins.value;
+      this.get_available_koins() +
+      this.getVhpContract().balanceOf(this.contractId);
 
     // check how much this virtual balance has increased
     System.require(
@@ -337,43 +196,14 @@ export class Fogata extends Ownable {
       }
       totalFeesCollected += fee;
     }
+
+    // update the reserved koins to not take them into account
+    // in the get_available_koins() computation
     reservedKoins.value += totalFeesCollected;
     this.reservedKoins.put(reservedKoins);
 
     // calculate the new virtual balance of the pool
     return poolVirtual - totalFeesCollected;
-  }
-
-  /**
-   * Set mining pool parameters
-   * @external
-   */
-  set_pool_params(args: fogata.pool_params): common.boole {
-    System.require(
-      this.only_owner(),
-      "owner has not authorized to update params"
-    );
-    let totalPercentage: u32 = 0;
-    for (let i = 0; i < args.beneficiaries.length; i += 1) {
-      totalPercentage += args.beneficiaries[i].percentage;
-      System.require(
-        args.beneficiaries[i].percentage < ONE_HUNDRED_PERCENT &&
-          totalPercentage < ONE_HUNDRED_PERCENT,
-        "the percentages for beneficiaries exceeded 100%"
-      );
-    }
-    this.poolParams.put(args);
-    System.event("fogata.set_pool_params", this.callArgs!.args, []);
-    return new common.boole(true);
-  }
-
-  /**
-   * Get mining pool parameters
-   * @external
-   * @readonly
-   */
-  get_pool_params(): fogata.pool_params {
-    return this.poolParams.get()!;
   }
 
   /**
@@ -398,9 +228,7 @@ export class Fogata extends Ownable {
       return new common.boole(false);
     }
 
-    const koinBalance =
-      this.getKoinContract().balanceOf(this.contractId) -
-      this.reservedKoins.get()!.value;
+    const koinBalance = this.get_available_koins();
 
     // burn the amount that was not withdrawn in the previous period
     System.require(
@@ -440,7 +268,7 @@ export class Fogata extends Ownable {
   balance_of(args: common.address): fogata.balance {
     const poolState = this.poolState.get()!;
     const userStake = this.stakes.get(args.account!)!;
-    poolState.virtual = this.payBeneficiaries(poolState.virtual, true);
+    poolState.virtual = this.refreshBalances(poolState.virtual, true);
     const userVirtual = multiplyAndDivide(
       userStake.value,
       poolState.virtual,
@@ -483,7 +311,7 @@ export class Fogata extends Ownable {
 
     // distribute pending payments and update the virtual balance
     // before making the transfer
-    poolState.virtual = this.payBeneficiaries(poolState.virtual);
+    poolState.virtual = this.refreshBalances(poolState.virtual);
 
     // burn KOINs in the same account to convert it to VHP
     if (args.koin_amount > 0) {
@@ -582,7 +410,7 @@ export class Fogata extends Ownable {
 
     // distribute pending payments and update the virtual balance
     // before making the transfer
-    poolState.virtual = this.payBeneficiaries(poolState.virtual);
+    poolState.virtual = this.refreshBalances(poolState.virtual);
 
     System.require(poolState.stake > 0, "there is no stake in the pool");
 
