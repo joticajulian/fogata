@@ -28,6 +28,11 @@ message balance {
    uint64 vhp_amount = 2 [jstype = JS_STRING];
 }
 
+message koin_account {
+   bytes account = 1 [(koinos.btype) = ADDRESS];
+   uint64 koin_amount = 2 [jstype = JS_STRING];
+}
+
 message beneficiary {
    bytes address = 1 [(koinos.btype) = ADDRESS];
    uint32 percentage = 2; // all percentages use 3 decimals (1000 => 1%)

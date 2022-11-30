@@ -37,6 +37,14 @@ export class Fogata extends Ownable {
 
   previousStakes: Storage.Map<Uint8Array, fogata.previous_stake>;
 
+  // Balances beneficiaries and mana supporters
+
+  balancesBeneficiaries: Storage.Map<Uint8Array, common.uint64>;
+
+  balancesManaSupporters: Storage.Map<Uint8Array, common.uint64>;
+
+  reservedKoins: Storage.Obj<common.uint64>;
+
   constructor() {
     super();
 
@@ -70,6 +78,30 @@ export class Fogata extends Ownable {
       fogata.previous_stake.decode,
       fogata.previous_stake.encode,
       () => new fogata.previous_stake(0, 0, false)
+    );
+
+    this.balancesBeneficiaries = new Storage.Map(
+      this.contractId,
+      4,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
+    );
+
+    this.balancesManaSupporters = new Storage.Map(
+      this.contractId,
+      5,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
+    );
+
+    this.reservedKoins = new Storage.Obj(
+      this.contractId,
+      6,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
     );
   }
 
@@ -142,6 +174,96 @@ export class Fogata extends Ownable {
   }
 
   /**
+   * Transfer KOINs to the pool to support the mana consumption.
+   * This amount will not be burned
+   * @external
+   */
+  add_mana_support(args: fogata.koin_account): common.boole {
+    const balance = this.balancesManaSupporters.get(args.account!)!;
+    const reservedKoins = this.reservedKoins.get()!;
+
+    System.require(
+      this.getKoinContract().transfer(
+        args.account!,
+        this.contractId,
+        args.koin_amount
+      ),
+      "transfer rejected"
+    );
+
+    balance.value += args.koin_amount;
+    reservedKoins.value += args.koin_amount;
+    this.balancesManaSupporters.put(args.account!, balance);
+    this.reservedKoins.put(reservedKoins);
+
+    System.event("fogata.add_mana_support", this.callArgs!.args, [
+      args.account!,
+    ]);
+    return new common.boole(true);
+  }
+
+  /**
+   * Withdraw KOINs used in the mana consumption.
+   * @external
+   */
+  remove_mana_support(args: fogata.koin_account): common.boole {
+    const balance = this.balancesManaSupporters.get(args.account!)!;
+    const reservedKoins = this.reservedKoins.get()!;
+
+    System.require(balance.value >= args.koin_amount, "insufficient balance");
+    System.require(
+      this.getKoinContract().transfer(
+        this.contractId,
+        args.account!,
+        args.koin_amount
+      ),
+      "transfer rejected"
+    );
+
+    balance.value -= args.koin_amount;
+    reservedKoins.value -= args.koin_amount;
+    this.balancesManaSupporters.put(args.account!, balance);
+    this.reservedKoins.put(reservedKoins);
+
+    System.event("fogata.remove_mana_support", this.callArgs!.args, [
+      args.account!,
+    ]);
+    return new common.boole(true);
+  }
+
+  /**
+   * Transfer earnings to a beneficiary
+   * @external
+   */
+  pay_beneficiary(args: common.address): common.boole {
+    const balance = this.balancesBeneficiaries.get(args.account!)!;
+    if (balance.value == 0) return new common.boole(true);
+    System.require(
+      this.getKoinContract().transfer(
+        this.contractId,
+        args.account!,
+        balance.value
+      ),
+      "transfer rejected"
+    );
+    this.balancesBeneficiaries.remove(args.account!);
+    return new common.boole(true);
+  }
+
+  /**
+   * Transfer earnings to a beneficiary
+   * @external
+   */
+  pay_beneficiaries(): common.boole {
+    const poolParams = this.poolParams.get()!;
+    for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
+      const beneficiary = poolParams.beneficiaries[i];
+      this.pay_beneficiary(new common.address(beneficiary.address!));
+    }
+    return new common.boole(true);
+  }
+
+  /**
    * Internal function to update the fees distributed to beneficiaries
    * (like node operator or sponsors program) based on the
    * virtual balance of the pool.
@@ -155,10 +277,13 @@ export class Fogata extends Ownable {
    * function.
    */
   payBeneficiaries(lastPoolVirtual: u64, readonly: boolean = false): u64 {
+    const reservedKoins = this.reservedKoins.get()!;
+
     // get the virtual balance of pool
     const poolVirtual =
       this.getKoinContract().balanceOf(this.contractId) +
-      this.getVhpContract().balanceOf(this.contractId);
+      this.getVhpContract().balanceOf(this.contractId) -
+      reservedKoins.value;
 
     // check how much this virtual balance has increased
     System.require(
@@ -179,18 +304,14 @@ export class Fogata extends Ownable {
         ONE_HUNDRED_PERCENT
       );
       if (fee > 0 && !readonly) {
-        const statusTransfer = this.getKoinContract().transfer(
-          this.contractId,
-          beneficiary.address!,
-          fee
-        );
-        System.require(
-          statusTransfer == true,
-          `transfer to beneficiary number ${i} was rejected`
-        );
+        const balance = this.balancesBeneficiaries.get(beneficiary.address!)!;
+        balance.value += fee;
+        this.balancesBeneficiaries.put(beneficiary.address!, balance);
       }
       totalFeesCollected += fee;
     }
+    reservedKoins.value += totalFeesCollected;
+    this.reservedKoins.put(reservedKoins);
 
     // calculate the new virtual balance of the pool
     return poolVirtual - totalFeesCollected;
@@ -250,7 +371,9 @@ export class Fogata extends Ownable {
       return new common.boole(false);
     }
 
-    const koinBalance = this.getKoinContract().balanceOf(this.contractId);
+    const koinBalance =
+      this.getKoinContract().balanceOf(this.contractId) -
+      this.reservedKoins.get()!.value;
 
     // burn the amount that was not withdrawn in the previous period
     System.require(
@@ -278,6 +401,7 @@ export class Fogata extends Ownable {
     poolState.previous_stake = poolState.stake;
     this.poolState.put(poolState);
 
+    System.event("fogata.compute_koin_balances", new Uint8Array(0), []);
     return new common.boole(true);
   }
 
