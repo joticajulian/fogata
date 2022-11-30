@@ -174,6 +174,33 @@ export class Fogata extends Ownable {
   }
 
   /**
+   * Get reserved koins (beneficiaries and mana supporters)
+   * @external
+   * @readonly
+   */
+  get_reserved_koins(): common.uint64 {
+    return this.reservedKoins.get()!;
+  }
+
+  /**
+   * Get koin balance of mana supporter
+   * @external
+   * @readonly
+   */
+  get_mana_support(args: common.address): common.uint64 {
+    return this.balancesManaSupporters.get(args.account!)!;
+  }
+
+  /**
+   * Get koin balance of beneficiary
+   * @external
+   * @readonly
+   */
+  get_beneficiary_balance(args: common.address): common.uint64 {
+    return this.balancesBeneficiaries.get(args.account!)!;
+  }
+
+  /**
    * Transfer KOINs to the pool to support the mana consumption.
    * This amount will not be burned
    * @external
