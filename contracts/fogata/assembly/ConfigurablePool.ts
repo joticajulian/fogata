@@ -1,4 +1,4 @@
-import { System, Storage } from "@koinos/sdk-as";
+import { System, Storage, Arrays } from "@koinos/sdk-as";
 import { ManaDelegable } from "./ManaDelegable";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
@@ -38,6 +38,20 @@ export class ConfigurablePool extends ManaDelegable {
         args.beneficiaries[i].percentage < ONE_HUNDRED_PERCENT &&
           totalPercentage < ONE_HUNDRED_PERCENT,
         "the percentages for beneficiaries exceeded 100%"
+      );
+      System.require(
+        !Arrays.equal(
+          args.beneficiaries[i].address,
+          System.getContractAddress("koin")
+        ),
+        "the beneficiary cannot be the koin contract"
+      );
+      System.require(
+        !Arrays.equal(
+          args.beneficiaries[i].address,
+          System.getContractAddress("vhp")
+        ),
+        "the beneficiary cannot be the vhp contract"
       );
     }
     this.poolParams.put(args);
