@@ -11,7 +11,10 @@ function humanFileSize(size) {
   );
 }
 
-const filePath = path.join(__dirname, "contracts/build/release/contract.wasm");
+const filePath = path.join(
+  __dirname,
+  "contracts/fogata/build/release/contract.wasm"
+);
 const data = fs.readFileSync(filePath);
 const hash = crypto.createHash("sha256").update(data).digest("hex");
 
