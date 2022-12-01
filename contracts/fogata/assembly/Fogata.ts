@@ -264,10 +264,12 @@ export class Fogata extends ConfigurablePool {
       totalFeesCollected += fee;
     }
 
-    // update the reserved koins to not take them into account
-    // in the get_available_koins() computation
-    reservedKoins.value += totalFeesCollected;
-    this.reservedKoins.put(reservedKoins);
+    if (!readonly) {
+      // update the reserved koins to not take them into account
+      // in the get_available_koins() computation
+      reservedKoins.value += totalFeesCollected;
+      this.reservedKoins.put(reservedKoins);
+    }
 
     // calculate the new virtual balance of the pool
     return poolVirtual - totalFeesCollected;
