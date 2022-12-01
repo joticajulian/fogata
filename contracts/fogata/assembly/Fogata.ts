@@ -4,9 +4,11 @@ import {
   Arrays,
   pob,
   Token,
+  token,
   Protobuf,
   authority,
   Base58,
+  StringBytes,
 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { ConfigurablePool, ONE_HUNDRED_PERCENT } from "./ConfigurablePool";
@@ -32,6 +34,8 @@ export class Fogata extends ConfigurablePool {
   // Balances beneficiaries and mana supporters
 
   balancesBeneficiaries: Storage.Map<Uint8Array, common.uint64>;
+
+  auxBeneficiary: fogata.beneficiary | null;
 
   constructor() {
     super();
@@ -119,12 +123,24 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Transfer earnings to a beneficiary
+   * Transfer earnings to a beneficiary. It can be called by anyone
    * @external
    */
   pay_beneficiary(args: common.address): common.boole {
     const balance = this.balancesBeneficiaries.get(args.account!)!;
     if (balance.value == 0) return new common.boole(true);
+
+    if (!this.auxBeneficiary) {
+      const poolParams = this.poolParams.get()!;
+      for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
+        const beneficiary = poolParams.beneficiaries[i];
+        if (Arrays.equal(this.auxBeneficiary.address, args.account)) {
+          this.auxBeneficiary = beneficiary;
+          break;
+        }
+      }
+    }
+
     System.require(
       this.getKoinContract().transfer(
         this.contractId,
@@ -134,18 +150,69 @@ export class Fogata extends ConfigurablePool {
       "transfer rejected"
     );
     this.balancesBeneficiaries.remove(args.account!);
+
+    if (!this.auxBeneficiary) {
+      // the beneficiary had a balance in the pool
+      // but it is no longer defined in the poolParams.
+      // Transfer is OK
+      System.log("beneficiary not found in poolParams");
+      return new common.boole(true);
+    }
+
+    if (!this.auxBeneficiary.has_receiver) {
+      // Transfer is OK
+      // no need to call a receiver
+      return new common.boole(true);
+    }
+
+    // the benefiary has a receiver
+    const argsBuffer = Protobuf.encode(
+      new token.transfer_arguments(
+        this.contractId,
+        args.account!,
+        balance.value
+      ),
+      token.transfer_arguments.encode
+    );
+    const callRes = System.call(
+      this.auxBeneficiary.address,
+      this.auxBeneficiary.on_received_entry_point,
+      argsBuffer
+    );
+    if (callRes.code != 0) {
+      const errorMessage = `failed to call onReceived in beneficiary ${Base58.encode(
+        this.auxBeneficiary.address
+      )}: ${
+        callRes.res.error && callRes.res.error!.message
+          ? callRes.res.error!.message!
+          : ""
+      }`;
+      System.exit(callRes.code, StringBytes.stringToBytes(errorMessage));
+    }
+
+    let minted: common.uint64;
+    if (!callRes.res.object) {
+      minted = Protobuf.decode<common.uint64>(
+        callRes.res.object!,
+        common.uint64.decode
+      );
+    } else {
+      minted = new common.uint64(0);
+    }
+
+    // TODO: distribute minted tokens between users
     return new common.boole(true);
   }
 
   /**
-   * Transfer earnings to a beneficiary
+   * Transfer earnings to a beneficiary. It can be called by anyone
    * @external
    */
   pay_beneficiaries(): common.boole {
     const poolParams = this.poolParams.get()!;
     for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
-      const beneficiary = poolParams.beneficiaries[i];
-      this.pay_beneficiary(new common.address(beneficiary.address!));
+      this.auxBeneficiary = poolParams.beneficiaries[i];
+      this.pay_beneficiary(new common.address(this.auxBeneficiary!.address!));
     }
     return new common.boole(true);
   }
