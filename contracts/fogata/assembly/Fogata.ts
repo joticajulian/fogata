@@ -134,7 +134,7 @@ export class Fogata extends ConfigurablePool {
       const poolParams = this.poolParams.get()!;
       for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
         const beneficiary = poolParams.beneficiaries[i];
-        if (Arrays.equal(this.auxBeneficiary.address, args.account)) {
+        if (Arrays.equal(beneficiary.address, args.account)) {
           this.auxBeneficiary = beneficiary;
           break;
         }
@@ -159,7 +159,7 @@ export class Fogata extends ConfigurablePool {
       return new common.boole(true);
     }
 
-    if (!this.auxBeneficiary.has_receiver) {
+    if (!this.auxBeneficiary!.has_receiver) {
       // Transfer is OK
       // no need to call a receiver
       return new common.boole(true);
@@ -175,13 +175,13 @@ export class Fogata extends ConfigurablePool {
       token.transfer_arguments.encode
     );
     const callRes = System.call(
-      this.auxBeneficiary.address,
-      this.auxBeneficiary.on_received_entry_point,
+      this.auxBeneficiary!.address!,
+      this.auxBeneficiary!.on_received_entry_point,
       argsBuffer
     );
     if (callRes.code != 0) {
       const errorMessage = `failed to call onReceived in beneficiary ${Base58.encode(
-        this.auxBeneficiary.address
+        this.auxBeneficiary!.address!
       )}: ${
         callRes.res.error && callRes.res.error!.message
           ? callRes.res.error!.message!
