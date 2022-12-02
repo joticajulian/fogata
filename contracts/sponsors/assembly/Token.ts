@@ -1,35 +1,49 @@
-import { Arrays, System, authority, Storage } from "@koinos/sdk-as";
-import { Ownable } from "./Ownable";
+import {
+  Arrays,
+  System,
+  authority,
+  Storage,
+  Token as TokenKoinos,
+  Protobuf,
+} from "@koinos/sdk-as";
 import { token } from "./proto/token";
+import { common } from "./proto/common";
+import { multiplyAndDivide } from "./utils";
 
 const SUPPLY_ID = 0;
 const BALANCES_SPACE_ID = 1;
 
-export class Token extends Ownable {
-  callArgs: System.getArgumentsReturn | null;
+const TIME_1: u64 = 1672531200000; // Sunday, January 1, 2023 12:00:00 AM
+const TIME_2: u64 = 1704067200000; // Monday, January 1, 2024 12:00:00 AM
+const DECAY_PERIOD: u64 = 31536000000; // TIME_2 - TIME_1 = 1 year
+const MAX_MINT_FACTOR: u64 = 20;
 
-  _name: string = "test koin";
-  _symbol: string = "T_KOIN";
+export class Token {
+  callArgs: System.getArgumentsReturn | null;
+  contractId: Uint8Array;
+
+  _name: string = "Governance Sponsors Token";
+  _symbol: string = "GST";
   _decimals: u32 = 8;
 
-  supply: Storage.Obj<token.uint64>;
-  balances: Storage.Map<Uint8Array, token.uint64>;
+  supply: Storage.Obj<common.uint64>;
+  balances: Storage.Map<Uint8Array, common.uint64>;
 
   constructor() {
-    super();
+    this.contractId = System.getContractId();
     this.supply = new Storage.Obj(
       this.contractId,
       SUPPLY_ID,
-      token.uint64.decode,
-      token.uint64.encode,
-      () => new token.uint64(0)
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
     );
     this.balances = new Storage.Map(
       this.contractId,
       BALANCES_SPACE_ID,
-      token.uint64.decode,
-      token.uint64.encode,
-      () => new token.uint64(0)
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
     );
   }
 
@@ -38,8 +52,8 @@ export class Token extends Ownable {
    * @external
    * @readonly
    */
-  name(): token.str {
-    return new token.str(this._name);
+  name(): common.str {
+    return new common.str(this._name);
   }
 
   /**
@@ -47,8 +61,8 @@ export class Token extends Ownable {
    * @external
    * @readonly
    */
-  symbol(): token.str {
-    return new token.str(this._symbol);
+  symbol(): common.str {
+    return new common.str(this._symbol);
   }
 
   /**
@@ -56,8 +70,8 @@ export class Token extends Ownable {
    * @external
    * @readonly
    */
-  decimals(): token.uint32 {
-    return new token.uint32(this._decimals);
+  decimals(): common.uint32 {
+    return new common.uint32(this._decimals);
   }
 
   /**
@@ -74,7 +88,7 @@ export class Token extends Ownable {
    * @external
    * @readonly
    */
-  total_supply(): token.uint64 {
+  total_supply(): common.uint64 {
     return this.supply.get()!;
   }
 
@@ -83,7 +97,7 @@ export class Token extends Ownable {
    * @external
    * @readonly
    */
-  balance_of(args: token.balance_of_args): token.uint64 {
+  balance_of(args: token.balance_of_args): common.uint64 {
     return this.balances.get(args.owner!)!;
   }
 
@@ -91,7 +105,7 @@ export class Token extends Ownable {
    * Transfer tokens
    * @external
    */
-  transfer(args: token.transfer_args): token.boole {
+  transfer(args: token.transfer_args): common.boole {
     const from = args.from!;
     const to = args.to!;
     const value = args.value;
@@ -106,13 +120,13 @@ export class Token extends Ownable {
       )
     ) {
       System.log("from has not authorized transfer");
-      return new token.boole(false);
+      return new common.boole(false);
     }
 
     let fromBalance = this.balances.get(from)!;
     if (fromBalance.value < value) {
       System.log("'from' has insufficient balance");
-      return new token.boole(false);
+      return new common.boole(false);
     }
     fromBalance.value -= value;
     this.balances.put(from, fromBalance);
@@ -124,23 +138,22 @@ export class Token extends Ownable {
     const impacted = [to, from];
     System.event("token.transfer", this.callArgs!.args, impacted);
 
-    return new token.boole(true);
+    return new common.boole(true);
   }
 
   /**
    * Mint new tokens
-   * @external
+   * Internal function
    */
-  mint(args: token.mint_args): token.boole {
-    System.require(this.only_owner(), "owner has not allowed the mint");
+  mint(args: token.mint_args): void {
     const to = args.to!;
     const value = args.value;
 
     const supply = this.supply.get()!;
-    if (supply.value > u64.MAX_VALUE - value) {
-      System.log("Mint would overflow supply");
-      return new token.boole(false);
-    }
+    System.require(
+      supply.value > u64.MAX_VALUE - value,
+      "Mint would overflow supply"
+    );
 
     let toBalance = this.balances.get(to)!;
     toBalance.value += value;
@@ -149,16 +162,18 @@ export class Token extends Ownable {
     this.supply.put(supply);
 
     const impacted = [to];
-    System.event("token.mint", this.callArgs!.args, impacted);
-
-    return new token.boole(true);
+    System.event(
+      "token.mint",
+      Protobuf.encode(args, token.mint_args.encode),
+      impacted
+    );
   }
 
   /**
    * Burn tokens
    * @external
    */
-  burn(args: token.burn_args): token.boole {
+  burn(args: token.burn_args): common.boole {
     const from = args.from!;
     const value = args.value;
 
@@ -169,18 +184,16 @@ export class Token extends Ownable {
         authority.authorization_type.contract_call,
         from,
         this.callArgs!.args
-      ) &&
-      // the owner authority can burn as well
-      !this.only_owner()
+      )
     ) {
-      System.log("neither from nor owner have authorized the burn");
-      return new token.boole(false);
+      System.log("from has not authorized the burn");
+      return new common.boole(false);
     }
 
     let fromBalance = this.balances.get(from)!;
     if (fromBalance.value < value) {
       System.log("'from' has insufficient balance");
-      return new token.boole(false);
+      return new common.boole(false);
     }
 
     const supply = this.supply.get()!;
@@ -192,6 +205,37 @@ export class Token extends Ownable {
     const impacted = [from];
     System.event("token.burn", this.callArgs!.args, impacted);
 
-    return new token.boole(true);
+    return new common.boole(true);
+  }
+
+  /**
+   * Contribute with koins to the sponsors program, and get back
+   * governance tokens
+   * @external
+   */
+  contribute(args: token.contribute_args): common.boole {
+    const koinContract = new TokenKoinos(System.getContractAddress("koin"));
+    System.require(
+      koinContract.transfer(args.from!, this.contractId, args.value),
+      "transfer to contribute rejected"
+    );
+
+    const now = System.getBlockField("header.timestamp")!.uint64_value;
+    let newTokens: u64 = 0;
+    if (now < TIME_1) {
+      newTokens = MAX_MINT_FACTOR * args.value;
+    } else if (TIME_1 <= now && now <= TIME_2) {
+      const dt = now - TIME_1; // time in hours
+      newTokens = multiplyAndDivide(
+        args.value,
+        MAX_MINT_FACTOR * DECAY_PERIOD - (MAX_MINT_FACTOR - 1) * dt,
+        DECAY_PERIOD
+      );
+    } else {
+      newTokens = args.value;
+    }
+
+    this.mint(new token.mint_args(args.from!, newTokens));
+    return new common.boole(true);
   }
 }

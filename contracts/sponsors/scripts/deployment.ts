@@ -4,7 +4,7 @@ import { Signer, Contract, Provider } from "koilib";
 import { TransactionJson } from "koilib/lib/interface";
 import * as dotenv from "dotenv";
 import tokenAbi from "../build/token-abi.json";
-import koinosConfig from "../koinos.config.js";
+import koinosConfig from "../koinos.config.js.js";
 
 dotenv.config();
 

@@ -4,22 +4,6 @@ package token;
 
 import "koinos/options.proto"; 
 
-message str {
-   string value = 1;
-}
-
-message uint32 {
-   uint32 value = 1;
-}
-
-message uint64 {
-   uint64 value = 1 [jstype = JS_STRING];
-}
-
-message boole {
-   bool value = 1;
-}
-
 message info {
    string name = 1;
    string symbol = 2;
@@ -34,6 +18,11 @@ message transfer_args {
    bytes from = 1 [(koinos.btype) = ADDRESS];
    bytes to = 2 [(koinos.btype) = ADDRESS];
    uint64 value = 3 [jstype = JS_STRING];
+}
+
+message contribute_args {
+   bytes from = 1 [(koinos.btype) = ADDRESS];
+   uint64 value = 2 [jstype = JS_STRING];
 }
 
 message mint_args {

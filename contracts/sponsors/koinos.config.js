@@ -3,12 +3,8 @@ require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 
 module.exports = {
   class: "Token",
-  proto: [
-    "./proto/token.proto",
-    "./proto/ownable.proto",
-    "./proto/common.proto",
-  ],
-  files: ["./Token.ts", "./Ownable.ts"],
+  proto: ["./proto/token.proto", "./proto/common.proto"],
+  files: ["./Token.ts"],
   sourceDir: "./assembly",
   buildDir: "./build",
   koinosProtoDir: "../../node_modules/koinos-precompiler-as/koinos-proto",
