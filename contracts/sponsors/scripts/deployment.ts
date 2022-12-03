@@ -3,8 +3,8 @@ import path from "path";
 import { Signer, Contract, Provider } from "koilib";
 import { TransactionJson } from "koilib/lib/interface";
 import * as dotenv from "dotenv";
-import tokenAbi from "../build/token-abi.json";
-import koinosConfig from "../koinos.config.js.js";
+import abi from "../build/sponsors-abi.json";
+import koinosConfig from "../koinos.config.js";
 
 dotenv.config();
 
@@ -17,18 +17,14 @@ async function main() {
   const accountWithFunds = Signer.fromWif(
     network.accounts.manaSupporter.privateKey
   );
-  const contractOwner = Signer.fromWif(
-    network.accounts.contractOwner.privateKey
-  );
-  const contractAccount = Signer.fromWif(network.accounts.contract.privateKey);
+  const contractAccount = Signer.fromWif(network.accounts.sponsors.privateKey);
   accountWithFunds.provider = provider;
   contractAccount.provider = provider;
-  contractOwner.provider = provider;
 
   const contract = new Contract({
     id: contractAccount.address,
     signer: contractAccount,
-    abi: tokenAbi,
+    abi,
     provider,
     bytecode: fs.readFileSync(
       path.join(__dirname, "../build/release/contract.wasm")
@@ -41,18 +37,8 @@ async function main() {
     },
   });
 
-  const { operation: takeOwnership } = await contract.functions.set_owner(
-    {
-      account: contractOwner.address,
-    },
-    {
-      onlyOperation: true,
-    }
-  );
-
   const { receipt, transaction } = await contract.deploy({
-    abi: JSON.stringify(tokenAbi),
-    nextOperations: [takeOwnership],
+    abi: JSON.stringify(abi),
   });
   console.log("Transaction submitted. Receipt: ");
   console.log(receipt);

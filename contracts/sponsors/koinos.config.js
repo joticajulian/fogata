@@ -2,28 +2,24 @@ const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 
 module.exports = {
-  class: "Token",
+  class: "Sponsors",
   proto: ["./proto/token.proto", "./proto/common.proto"],
-  files: ["./Token.ts"],
+  files: ["./Sponsors.ts"],
   sourceDir: "./assembly",
   buildDir: "./build",
   koinosProtoDir: "../../node_modules/koinos-precompiler-as/koinos-proto",
   networks: {
     harbinger: {
       rpcNodes: [
-        "https://testnet.koinosblocks.com",
         "https://harbinger-api.koinos.io",
+        "https://testnet.koinosblocks.com",
       ],
       accounts: {
         manaSupporter: {
           privateKey: process.env.HARBINGER_PRIVATE_KEY_MANA_SUPPORTER,
         },
-        contract: {
-          privateKey: process.env.HARBINGER_PRIVATE_KEY_CONTRACT_TEST_KOIN,
-        },
-        contractOwner: {
-          privateKey:
-            process.env.HARBINGER_PRIVATE_KEY_CONTRACT_OWNER_TEST_KOIN,
+        sponsors: {
+          privateKey: process.env.HARBINGER_PRIVATE_KEY_CONTRACT_SPONSORS,
         },
       },
     },

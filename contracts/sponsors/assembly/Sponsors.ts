@@ -18,12 +18,12 @@ const TIME_2: u64 = 1704067200000; // Monday, January 1, 2024 12:00:00 AM
 const DECAY_PERIOD: u64 = 31536000000; // TIME_2 - TIME_1 = 1 year
 const MAX_MINT_FACTOR: u64 = 20;
 
-export class Token {
+export class Sponsors {
   callArgs: System.getArgumentsReturn | null;
   contractId: Uint8Array;
 
-  _name: string = "Governance Sponsors Token";
-  _symbol: string = "GST";
+  _name: string = "Vapor";
+  _symbol: string = "VAPOR";
   _decimals: u32 = 8;
 
   supply: Storage.Obj<common.uint64>;
@@ -151,7 +151,7 @@ export class Token {
 
     const supply = this.supply.get()!;
     System.require(
-      supply.value > u64.MAX_VALUE - value,
+      supply.value <= u64.MAX_VALUE - value,
       "Mint would overflow supply"
     );
 
@@ -223,15 +223,18 @@ export class Token {
     const now = System.getBlockField("header.timestamp")!.uint64_value;
     let newTokens: u64 = 0;
     if (now < TIME_1) {
+      // max mint factor at the beginning
       newTokens = MAX_MINT_FACTOR * args.value;
     } else if (TIME_1 <= now && now <= TIME_2) {
-      const dt = now - TIME_1; // time in hours
+      // the factor decreases over time until 1
+      const dt = now - TIME_1;
       newTokens = multiplyAndDivide(
         args.value,
         MAX_MINT_FACTOR * DECAY_PERIOD - (MAX_MINT_FACTOR - 1) * dt,
         DECAY_PERIOD
       );
     } else {
+      // finally the factor continues to be 1
       newTokens = args.value;
     }
 

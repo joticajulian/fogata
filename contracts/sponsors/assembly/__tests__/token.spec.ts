@@ -7,7 +7,7 @@ import {
   chain,
   System,
 } from "@koinos/sdk-as";
-import { Token } from "../Token";
+import { Sponsors } from "../Sponsors";
 import { token } from "../proto/token";
 
 const CONTRACT_ID = Base58.decode("1DQzuCcTKacbs9GGScRTU1Hc8BsyARTPqe");
