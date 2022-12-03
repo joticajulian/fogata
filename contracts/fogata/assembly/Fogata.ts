@@ -205,6 +205,15 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
+   * Get the state of the pool
+   * @external
+   * @readonly
+   */
+  get_pool_state(): fogata.pool_state {
+    return this.poolState.get()!;
+  }
+
+  /**
    * Transfer earnings to a beneficiary. It can be called by anyone
    * @external
    */
