@@ -7,10 +7,12 @@ module.exports = {
     "./proto/fogata.proto",
     "./proto/common.proto",
     "./proto/ownable.proto",
+    "./proto/token.proto",
   ],
   files: [
     "./Fogata.ts",
     "./IPoB.ts",
+    "./ISponsors.ts",
     "./Ownable.ts",
     "./ManaDelegable.ts",
     "./ConfigurablePool.ts",

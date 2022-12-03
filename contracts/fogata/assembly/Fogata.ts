@@ -11,9 +11,11 @@ import {
   StringBytes,
 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
+import { Sponsors } from "./ISponsors";
 import { ConfigurablePool, ONE_HUNDRED_PERCENT } from "./ConfigurablePool";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
+import { token as tokenSponsors } from "./proto/token";
 import { multiplyAndDivide } from "./utils";
 
 export class Fogata extends ConfigurablePool {
@@ -113,6 +115,10 @@ export class Fogata extends ConfigurablePool {
     return this.vhpContract!;
   }
 
+  getSponsorsContract(): Sponsors {
+    return new Sponsors(Base58.decode("1AuJQxqqyBZXqqugTQZzXRVRmEYJtsMYQ8"));
+  }
+
   /**
    * Get koin balance of beneficiary
    * @external
@@ -120,6 +126,15 @@ export class Fogata extends ConfigurablePool {
    */
   get_beneficiary_balance(args: common.address): common.uint64 {
     return this.balancesBeneficiaries.get(args.account!)!;
+  }
+
+  /**
+   * Get the state of the pool
+   * @external
+   * @readonly
+   */
+  get_pool_state(): fogata.pool_state {
+    return this.poolState.get()!;
   }
 
   /**
@@ -141,76 +156,28 @@ export class Fogata extends ConfigurablePool {
       }
     }
 
-    System.require(
-      this.getKoinContract().transfer(
-        this.contractId,
-        args.account!,
-        balance.value
-      ),
-      "transfer rejected"
+    const sponsorsContract = this.getSponsorsContract();
+    if (!Arrays.equal(args.account, sponsorsContract._contractId)) {
+      // normal transfer
+      System.require(
+        this.getKoinContract().transfer(
+          this.contractId,
+          args.account!,
+          balance.value
+        ),
+        "transfer rejected"
+      );
+      return new common.boole(true);
+    }
+
+    // transfer through the contribute function to receive governance tokens
+    sponsorsContract.contribute(
+      new tokenSponsors.contribute_args(this.contractId, balance.value)
     );
     this.balancesBeneficiaries.remove(args.account!);
 
-    if (!this.auxBeneficiary) {
-      // the beneficiary had a balance in the pool
-      // but it is no longer defined in the poolParams.
-      // Transfer is OK
-      System.log("beneficiary not found in poolParams");
-      return new common.boole(true);
-    }
-
-    if (!this.auxBeneficiary!.has_receiver) {
-      // Transfer is OK
-      // no need to call a receiver
-      return new common.boole(true);
-    }
-
-    // the benefiary has a receiver
-    const argsBuffer = Protobuf.encode(
-      new token.transfer_arguments(
-        this.contractId,
-        args.account!,
-        balance.value
-      ),
-      token.transfer_arguments.encode
-    );
-    const callRes = System.call(
-      this.auxBeneficiary!.address!,
-      this.auxBeneficiary!.on_received_entry_point,
-      argsBuffer
-    );
-    if (callRes.code != 0) {
-      const errorMessage = `failed to call onReceived in beneficiary ${Base58.encode(
-        this.auxBeneficiary!.address!
-      )}: ${
-        callRes.res.error && callRes.res.error!.message
-          ? callRes.res.error!.message!
-          : ""
-      }`;
-      System.exit(callRes.code, StringBytes.stringToBytes(errorMessage));
-    }
-
-    let minted: common.uint64;
-    if (!callRes.res.object) {
-      minted = Protobuf.decode<common.uint64>(
-        callRes.res.object!,
-        common.uint64.decode
-      );
-    } else {
-      minted = new common.uint64(0);
-    }
-
     // TODO: distribute minted tokens between users
     return new common.boole(true);
-  }
-
-  /**
-   * Get the state of the pool
-   * @external
-   * @readonly
-   */
-  get_pool_state(): fogata.pool_state {
-    return this.poolState.get()!;
   }
 
   /**
@@ -292,7 +259,7 @@ export class Fogata extends ConfigurablePool {
   compute_koin_balances(): common.boole {
     const now = System.getBlockField("header.timestamp")!.uint64_value;
     const poolState = this.poolState.get()!;
-    const paymentPeriod = this.poolParams.get()!.payment_period;
+    const poolParams = this.poolParams.get()!;
 
     if (now < poolState.next_payment_time) {
       // it is not yet time to pay
@@ -301,12 +268,15 @@ export class Fogata extends ConfigurablePool {
 
     if (poolState.next_payment_time == 0) {
       poolState.current_payment_time = now;
-      poolState.next_payment_time = now + paymentPeriod;
+      poolState.next_payment_time = now + poolParams.payment_period;
       this.poolState.put(poolState);
       return new common.boole(false);
     }
 
     const koinBalance = this.get_available_koins();
+    const vaporBalance = this.getSponsorsContract().balance_of(
+      new tokenSponsors.balance_of_args(this.contractId)
+    ).value;
 
     // burn the amount that was not withdrawn in the previous period
     System.require(
@@ -329,7 +299,7 @@ export class Fogata extends ConfigurablePool {
     // and set time for the next payment
     poolState.koin_withdrawn = 0;
     poolState.current_payment_time = poolState.next_payment_time;
-    poolState.next_payment_time += paymentPeriod;
+    poolState.next_payment_time += poolParams.payment_period;
     poolState.previous_koin = koinBalance;
     poolState.previous_stake = poolState.stake;
     this.poolState.put(poolState);

@@ -36,8 +36,6 @@ message koin_account {
 message beneficiary {
    bytes address = 1 [(koinos.btype) = ADDRESS];
    uint32 percentage = 2; // all percentages use 3 decimals (1000 => 1%)
-   bool has_receiver = 3;
-   uint32 on_received_entry_point = 4;
 }
 
 message pool_params {
