@@ -1928,10 +1928,10 @@ koilib@^5.2.0, koilib@^5.2.2:
     multibase "^4.0.6"
     protobufjs "^7.0.0"
 
-koinos-precompiler-as@^0.1.7:
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/koinos-precompiler-as/-/koinos-precompiler-as-0.1.7.tgz#6510b03713e211e5065107b2a981f0d0a27d1cd3"
-  integrity sha512-UHskZA0SWDqThrubOYKk9ZLoMvJVmnwJJSwCtSntIuJtSOAbcTtkDErgLt2dYVBoLEs9aSpd9prw5isiTKzJHA==
+koinos-precompiler-as@^0.1.8:
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/koinos-precompiler-as/-/koinos-precompiler-as-0.1.8.tgz#b3a03ff6740d6c9ec1a1eaf398ac30d852aa7b86"
+  integrity sha512-vrdAwrvoXSKFElwjsnzobemY91EyeD/DyxVXS+zdON9vsTrv/VZTCrKESLQQAEQVkEFud5+Ixwlm4h+MoV7kdw==
   dependencies:
     "@protobuf-ts/protoc" "^2.7.0"
     as-proto "^0.4.0"
