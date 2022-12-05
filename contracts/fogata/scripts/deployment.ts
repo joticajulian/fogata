@@ -60,11 +60,11 @@ async function main() {
       description: "koinos mining pool",
       beneficiaries: [
         {
-          address: "1PobYVhBQkTKcjH1fKUap5ZKcGYKHByapT",
+          address: "1AuJQxqqyBZXqqugTQZzXRVRmEYJtsMYQ8",
           percentage: 20000,
         },
       ],
-      payment_period: "604800000", // 1 week
+      payment_period: "86400000", // 1 day
     },
     {
       onlyOperation: true,
