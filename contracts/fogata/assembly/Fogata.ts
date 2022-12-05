@@ -176,7 +176,6 @@ export class Fogata extends ConfigurablePool {
     );
     this.balancesBeneficiaries.remove(args.account!);
 
-    // TODO: distribute minted tokens between users
     return new common.boole(true);
   }
 
@@ -262,7 +261,7 @@ export class Fogata extends ConfigurablePool {
     const poolParams = this.poolParams.get()!;
 
     if (now < poolState.next_payment_time) {
-      // it is not yet time to pay
+      System.log("it is not yet time to pay");
       return new common.boole(false);
     }
 
@@ -295,12 +294,34 @@ export class Fogata extends ConfigurablePool {
       );
     }
 
-    // reset koinWithdrawn counter, update previous pool state,
-    // and set time for the next payment
+    // ideally all vapor should be withdrawn
+    System.require(
+      poolState.previous_vapor >= poolState.vapor_withdrawn,
+      "internal error: poolState.previous_vapor < poolState.vapor_withdrawn"
+    );
+    const vaporNotWithdrawn =
+      poolState.previous_vapor - poolState.vapor_withdrawn;
+    if (vaporNotWithdrawn > 0) {
+      // this vapor was not withdrawn. The affected accounts will lose the rights
+      // over them, and they will be part to the whole community in the next period
+      System.event(
+        "fogata.vapor_not_withdrawn",
+        Protobuf.encode(
+          new common.uint64(vaporNotWithdrawn),
+          common.uint64.encode
+        ),
+        []
+      );
+    }
+
+    // reset koinWithdrawn counter, vaporWithdrawn counter,
+    // update previous pool state, and set time for the next payment
     poolState.koin_withdrawn = 0;
+    poolState.vapor_withdrawn = 0;
     poolState.current_payment_time = poolState.next_payment_time;
     poolState.next_payment_time += poolParams.payment_period;
     poolState.previous_koin = koinBalance;
+    poolState.previous_vapor = vaporBalance;
     poolState.previous_stake = poolState.stake;
     this.poolState.put(poolState);
 
@@ -336,8 +357,18 @@ export class Fogata extends ConfigurablePool {
             previousUserStake.stake,
             poolState.previous_koin,
             poolState.previous_stake
-          );
-    return new fogata.balance(maxKoin, userVirtual - maxKoin);
+          ) - previousUserStake.koin_withdrawn;
+
+    const maxVapor =
+      poolState.previous_stake == 0
+        ? 0
+        : multiplyAndDivide(
+            previousUserStake.stake,
+            poolState.previous_vapor,
+            poolState.previous_stake
+          ) - previousUserStake.vapor_withdrawn;
+
+    return new fogata.balance(maxKoin, userVirtual - maxKoin, maxVapor);
   }
 
   /**
@@ -505,12 +536,10 @@ export class Fogata extends ConfigurablePool {
               previousUserStake.stake,
               poolState.previous_koin,
               poolState.previous_stake
-            );
+            ) - previousUserStake.koin_withdrawn;
       System.require(
-        args.koin_amount <= maxKoin - previousUserStake.koin_withdrawn,
-        `you can withdraw max ${
-          maxKoin - previousUserStake.koin_withdrawn
-        } satoshis of koin for this period. Requested ${args.koin_amount}`
+        args.koin_amount <= maxKoin,
+        `you can withdraw max ${maxKoin} satoshis of koin for this period. Requested ${args.koin_amount}`
       );
       previousUserStake.koin_withdrawn += args.koin_amount;
       poolState.koin_withdrawn += args.koin_amount;
@@ -555,6 +584,47 @@ export class Fogata extends ConfigurablePool {
       ),
       [args.account!]
     );
+    return new common.boole(true);
+  }
+
+  /**
+   * Withdraw earnings of vapor. Anyone can call this
+   * method
+   * @external
+   */
+  collect_vapor(args: common.address): common.boole {
+    // get pool state, user stake, and virtual amount to withdraw
+    const poolState = this.poolState.get()!;
+    const userStake = this.stakes.get(args.account!)!;
+
+    // the amount of koin to withdraw is calculated from
+    // the previous snapshot of koin balances
+    const previousUserStake = this.previousStakes.get(args.account!)!;
+
+    // update the previous stake of the user if it is not in the
+    // current window of koin payments
+    if (previousUserStake.time < poolState.current_payment_time) {
+      previousUserStake.stake = userStake.value;
+      previousUserStake.time = poolState.current_payment_time;
+    }
+
+    const maxVapor =
+      poolState.previous_stake == 0
+        ? 0
+        : multiplyAndDivide(
+            previousUserStake.stake,
+            poolState.previous_vapor,
+            poolState.previous_stake
+          ) - previousUserStake.vapor_withdrawn;
+    System.require(maxVapor > 0, "no vapor available to be collected");
+    previousUserStake.vapor_withdrawn += maxVapor;
+    poolState.vapor_withdrawn += maxVapor;
+
+    const transferStatus1 = this.getSponsorsContract().transfer(
+      new tokenSponsors.transfer_args(this.contractId, args.account!, maxVapor)
+    ).value;
+    System.require(transferStatus1 == true, "transfer of vapor rejected");
+    this.previousStakes.put(args.account!, previousUserStake);
     return new common.boole(true);
   }
 }

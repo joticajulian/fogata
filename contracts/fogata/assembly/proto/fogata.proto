@@ -20,12 +20,14 @@ message stake_event {
 message previous_stake {
    uint64 stake = 1 [jstype = JS_STRING];
    uint64 time = 2 [jstype = JS_STRING];
-   uint64 koin_withdrawn = 3;
+   uint64 koin_withdrawn = 3 [jstype = JS_STRING];
+   uint64 vapor_withdrawn = 4 [jstype = JS_STRING];
 }
 
 message balance {
    uint64 koin_amount = 1 [jstype = JS_STRING];
    uint64 vhp_amount = 2 [jstype = JS_STRING];
+   uint64 vapor_amount = 3 [jstype = JS_STRING];
 }
 
 message koin_account {
@@ -43,15 +45,17 @@ message pool_params {
    string image = 2;
    string description = 3;
    repeated beneficiary beneficiaries = 4;
-   uint64 payment_period = 5; // time in milliseconds
+   uint64 payment_period = 5 [jstype = JS_STRING]; // time in milliseconds
 }
 
 message pool_state {
-   uint64 stake = 1;
-   uint64 virtual = 2; // total virtual balance (koin + vhp)
-   uint64 previous_stake = 3;
-   uint64 previous_koin = 4;
-   uint64 current_payment_time = 5;
-   uint64 next_payment_time = 6;
-   uint64 koin_withdrawn = 7;
+   uint64 stake = 1 [jstype = JS_STRING];
+   uint64 virtual = 2 [jstype = JS_STRING]; // total virtual balance (koin + vhp)
+   uint64 previous_stake = 3 [jstype = JS_STRING];
+   uint64 previous_koin = 4 [jstype = JS_STRING];
+   uint64 current_payment_time = 5 [jstype = JS_STRING];
+   uint64 next_payment_time = 6 [jstype = JS_STRING];
+   uint64 koin_withdrawn = 7 [jstype = JS_STRING];
+   uint64 previous_vapor = 8 [jstype = JS_STRING];
+   uint64 vapor_withdrawn = 9 [jstype = JS_STRING];
 }
