@@ -4,11 +4,10 @@ import {
   Arrays,
   pob,
   Token,
-  token,
   Protobuf,
   authority,
   Base58,
-  StringBytes,
+  token,
 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { Sponsors } from "./ISponsors";
@@ -17,6 +16,9 @@ import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 import { token as tokenSponsors } from "./proto/token";
 import { multiplyAndDivide } from "./utils";
+
+const BOOLE_TRUE = new common.boole(true);
+const BOOLE_FALSE = new common.boole(false);
 
 export class Fogata extends ConfigurablePool {
   callArgs: System.getArgumentsReturn | null;
@@ -38,6 +40,10 @@ export class Fogata extends ConfigurablePool {
   balancesBeneficiaries: Storage.Map<Uint8Array, common.uint64>;
 
   auxBeneficiary: fogata.beneficiary | null;
+
+  // Temporal allowance of koin transfers
+
+  allowTransfer: Storage.Obj<fogata.koin_account>;
 
   constructor() {
     super();
@@ -73,6 +79,14 @@ export class Fogata extends ConfigurablePool {
       common.uint64.encode,
       () => new common.uint64(0)
     );
+
+    this.allowTransfer = new Storage.Obj(
+      this.contractId,
+      5,
+      fogata.koin_account.decode,
+      fogata.koin_account.encode,
+      () => new fogata.koin_account()
+    );
   }
 
   /**
@@ -80,32 +94,79 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   authorize(args: authority.authorize_arguments): common.boole {
+    // check if it is a contract call
     if (args.type == authority.authorization_type.contract_call) {
+      // authorizations for KOIN contract
       if (
-        !Arrays.equal(args.call!.contract_id, System.getContractAddress("pob"))
+        Arrays.equal(args.call!.contract_id, this.getKoinContract()._contractId)
       ) {
-        System.log(
-          `authorize function can only be called from PoB contract (current call from ${Base58.encode(
-            args.call!.contract_id!
-          )})`
+        if (args.call!.entry_point != 0x27f576ca) {
+          System.log("authorize failed for koin contract: not transfer");
+          return BOOLE_FALSE;
+        }
+        if (!args.call!.data) {
+          System.log("authorize failed for koin contract: no data");
+          return BOOLE_FALSE;
+        }
+        const transferArgs = Protobuf.decode<token.transfer_arguments>(
+          args.call!.data!,
+          token.transfer_arguments.decode
         );
-        return new common.boole(false);
+        const allowTransfer = this.allowTransfer.get()!;
+        if (allowTransfer.koin_amount == 0) {
+          System.log(
+            "authorize failed for koin contract: no allowance defined for a transfer"
+          );
+          return BOOLE_FALSE;
+        }
+        if (
+          !Arrays.equal(allowTransfer.account, transferArgs.to) ||
+          allowTransfer.koin_amount < transferArgs.value
+        ) {
+          System.log(
+            `authorize failed for koin contract: invalid recipient or amount for a transfer: (${Base58.encode(
+              transferArgs.to!
+            )}, ${transferArgs.value}). Expected (${allowTransfer.account!}, ${
+              allowTransfer.koin_amount
+            })`
+          );
+          return BOOLE_FALSE;
+        }
+
+        // removing the allowance as it is already consumed
+        this.allowTransfer.remove();
+        return BOOLE_TRUE;
       }
-      if (args.call!.entry_point != 0x53192be1) {
-        System.log("only calls to register_public_key method are authorized");
-        return new common.boole(false);
+
+      // authorizations for POB contract
+      if (
+        Arrays.equal(args.call!.contract_id, System.getContractAddress("pob"))
+      ) {
+        if (args.call!.entry_point != 0x53192be1) {
+          System.log(
+            "authorize failed for PoB contract: not register_public_key"
+          );
+          return BOOLE_FALSE;
+        }
+        if (!this.only_owner()) {
+          System.log("authorize failed for PoB contract: not owner");
+          return BOOLE_FALSE;
+        }
+        return BOOLE_TRUE;
       }
-      if (!this.only_owner()) {
-        System.log("not authorized by the owner");
-        return new common.boole(false);
-      }
-      return new common.boole(true);
+
+      System.log(
+        `authorize failed: invalid contract ${Base58.encode(
+          args.call!.contract_id!
+        )}`
+      );
+      return BOOLE_FALSE;
     }
 
     // TODO: return false for the rest of the cases
-    // return new common.boole(false);
+    // return BOOLE_FALSE;
     System.require(this.only_owner(), "not authorized by the owner");
-    return new common.boole(true);
+    return BOOLE_TRUE;
   }
 
   getVhpContract(): Token {
@@ -143,7 +204,7 @@ export class Fogata extends ConfigurablePool {
    */
   pay_beneficiary(args: common.address): common.boole {
     const balance = this.balancesBeneficiaries.get(args.account!)!;
-    if (balance.value == 0) return new common.boole(true);
+    if (balance.value == 0) return BOOLE_TRUE;
 
     if (!this.auxBeneficiary) {
       const poolParams = this.poolParams.get()!;
@@ -167,16 +228,19 @@ export class Fogata extends ConfigurablePool {
         ),
         "transfer rejected"
       );
-      return new common.boole(true);
+      return BOOLE_TRUE;
     }
 
     // transfer through the contribute function to receive governance tokens
+    this.allowTransfer.put(
+      new fogata.koin_account(sponsorsContract._contractId, balance.value)
+    );
     sponsorsContract.contribute(
       new tokenSponsors.contribute_args(this.contractId, balance.value)
     );
     this.balancesBeneficiaries.remove(args.account!);
 
-    return new common.boole(true);
+    return BOOLE_TRUE;
   }
 
   /**
@@ -189,7 +253,7 @@ export class Fogata extends ConfigurablePool {
       this.auxBeneficiary = poolParams.beneficiaries[i];
       this.pay_beneficiary(new common.address(this.auxBeneficiary!.address!));
     }
-    return new common.boole(true);
+    return BOOLE_TRUE;
   }
 
   /**
@@ -262,14 +326,14 @@ export class Fogata extends ConfigurablePool {
 
     if (now < poolState.next_payment_time) {
       System.log("it is not yet time to pay");
-      return new common.boole(false);
+      return BOOLE_FALSE;
     }
 
     if (poolState.next_payment_time == 0) {
       poolState.current_payment_time = now;
       poolState.next_payment_time = now + poolParams.payment_period;
       this.poolState.put(poolState);
-      return new common.boole(false);
+      return BOOLE_FALSE;
     }
 
     const koinBalance = this.get_available_koins();
@@ -326,7 +390,7 @@ export class Fogata extends ConfigurablePool {
     this.poolState.put(poolState);
 
     System.event("fogata.compute_koin_balances", new Uint8Array(0), []);
-    return new common.boole(true);
+    return BOOLE_TRUE;
   }
 
   /**
@@ -467,7 +531,7 @@ export class Fogata extends ConfigurablePool {
       ),
       [args.account!]
     );
-    return new common.boole(true);
+    return BOOLE_TRUE;
   }
 
   /**
@@ -584,7 +648,7 @@ export class Fogata extends ConfigurablePool {
       ),
       [args.account!]
     );
-    return new common.boole(true);
+    return BOOLE_TRUE;
   }
 
   /**
@@ -625,6 +689,6 @@ export class Fogata extends ConfigurablePool {
     ).value;
     System.require(transferStatus1 == true, "transfer of vapor rejected");
     this.previousStakes.put(args.account!, previousUserStake);
-    return new common.boole(true);
+    return BOOLE_TRUE;
   }
 }
