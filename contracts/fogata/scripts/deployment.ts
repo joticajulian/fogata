@@ -5,6 +5,7 @@ import { TransactionJson } from "koilib/lib/interface";
 import * as dotenv from "dotenv";
 import abi from "../build/fogata-abi.json";
 import koinosConfig from "../koinos.config.js";
+import { contractDetails } from "../../utils";
 
 dotenv.config();
 
@@ -26,14 +27,13 @@ async function main() {
   contractAccount.provider = provider;
   contractOwner.provider = provider;
 
+  const wasmFile = path.join(__dirname, "../build/release/contract.wasm");
   const contract = new Contract({
     id: contractAccount.address,
     abi,
     signer: contractAccount,
     provider,
-    bytecode: fs.readFileSync(
-      path.join(__dirname, "../build/release/contract.wasm")
-    ),
+    bytecode: fs.readFileSync(wasmFile),
     options: {
       payer: accountWithFunds.address,
       beforeSend: async (tx: TransactionJson) => {
@@ -43,14 +43,10 @@ async function main() {
     },
   });
 
-  const { operation: takeOwnership } = await contract.functions.set_owner(
-    {
-      account: contractOwner.address,
-    },
-    {
-      onlyOperation: true,
-    }
-  );
+  contract.options.onlyOperation = true;
+  const { operation: takeOwnership } = await contract.functions.set_owner({
+    account: contractOwner.address,
+  });
 
   const { operation: setPoolParams } = await contract.functions.set_pool_params(
     {
@@ -65,12 +61,10 @@ async function main() {
         },
       ],
       payment_period: "86400000", // 1 day
-    },
-    {
-      onlyOperation: true,
     }
   );
 
+  contract.options.onlyOperation = false;
   const { receipt, transaction } = await contract.deploy({
     abi: JSON.stringify(abi),
     authorizesCallContract: true,
@@ -81,8 +75,14 @@ async function main() {
   console.log("Transaction submitted. Receipt: ");
   console.log(receipt);
   const { blockNumber } = await transaction.wait("byBlock", 60000);
+  console.log({
+    contract: "fogata",
+    address: contractAccount.address,
+    file: wasmFile,
+    ...contractDetails(contract.bytecode),
+  });
   console.log(
-    `Contract ${contractAccount.address} uploaded in block number ${blockNumber} (${networkName})`
+    `Contract uploaded in block number ${blockNumber} (${networkName})`
   );
 }
 
