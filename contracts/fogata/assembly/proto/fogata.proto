@@ -35,6 +35,18 @@ message koin_account {
    uint64 koin_amount = 2 [jstype = JS_STRING];
 }
 
+enum allowance_type {
+   UNDEFINED = 0;
+   TRANSFER_KOIN = 1;
+   BURN_KOIN = 2;
+}
+
+message allowance {
+  allowance_type type = 1;
+  uint64 koin_amount = 2 [jstype = JS_STRING];
+  bytes account = 3 [(koinos.btype) = ADDRESS];
+}
+
 message beneficiary {
    bytes address = 1 [(koinos.btype) = ADDRESS];
    uint32 percentage = 2; // all percentages use 3 decimals (1000 => 1%)

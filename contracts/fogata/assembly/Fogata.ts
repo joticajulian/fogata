@@ -43,7 +43,7 @@ export class Fogata extends ConfigurablePool {
 
   // Temporal allowance of koin transfers
 
-  allowTransfer: Storage.Obj<fogata.koin_account>;
+  allowance: Storage.Obj<fogata.allowance>;
 
   constructor() {
     super();
@@ -80,12 +80,12 @@ export class Fogata extends ConfigurablePool {
       () => new common.uint64(0)
     );
 
-    this.allowTransfer = new Storage.Obj(
+    this.allowance = new Storage.Obj(
       this.contractId,
       5,
-      fogata.koin_account.decode,
-      fogata.koin_account.encode,
-      () => new fogata.koin_account()
+      fogata.allowance.decode,
+      fogata.allowance.encode,
+      () => new fogata.allowance()
     );
   }
 
@@ -100,42 +100,93 @@ export class Fogata extends ConfigurablePool {
       if (
         Arrays.equal(args.call!.contract_id, this.getKoinContract()._contractId)
       ) {
-        if (args.call!.entry_point != 0x27f576ca) {
-          System.log("authorize failed for koin contract: not transfer");
-          return BOOLE_FALSE;
-        }
-        if (!args.call!.data) {
-          System.log("authorize failed for koin contract: no data");
-          return BOOLE_FALSE;
-        }
-        const transferArgs = Protobuf.decode<token.transfer_arguments>(
-          args.call!.data!,
-          token.transfer_arguments.decode
-        );
-        const allowTransfer = this.allowTransfer.get()!;
-        if (allowTransfer.koin_amount == 0) {
-          System.log(
-            "authorize failed for koin contract: no allowance defined for a transfer"
+        const allowance = this.allowance.get()!;
+        // authorizations to transfer KOINs
+        if (allowance.type == fogata.allowance_type.TRANSFER_KOIN) {
+          if (args.call!.entry_point != 0x27f576ca) {
+            System.log("authorize failed for koin contract: not transfer");
+            return BOOLE_FALSE;
+          }
+          if (!args.call!.data) {
+            System.log("authorize failed for koin contract: no data");
+            return BOOLE_FALSE;
+          }
+          const transferArgs = Protobuf.decode<token.transfer_arguments>(
+            args.call!.data!,
+            token.transfer_arguments.decode
           );
-          return BOOLE_FALSE;
-        }
-        if (
-          !Arrays.equal(allowTransfer.account, transferArgs.to) ||
-          allowTransfer.koin_amount < transferArgs.value
-        ) {
-          System.log(
-            `authorize failed for koin contract: invalid recipient or amount for a transfer: (${Base58.encode(
-              transferArgs.to!
-            )}, ${transferArgs.value}). Expected (${allowTransfer.account!}, ${
-              allowTransfer.koin_amount
-            })`
-          );
-          return BOOLE_FALSE;
+          if (allowance.koin_amount == 0) {
+            System.log(
+              "authorize failed for koin contract: no allowance defined for a transfer"
+            );
+            return BOOLE_FALSE;
+          }
+          if (
+            !Arrays.equal(allowance.account, transferArgs.to) ||
+            allowance.koin_amount < transferArgs.value
+          ) {
+            System.log(
+              `authorize failed for koin contract: invalid recipient or amount for a transfer: (${Base58.encode(
+                transferArgs.to!
+              )}, ${transferArgs.value}). Expected (${allowance.account!}, ${
+                allowance.koin_amount
+              })`
+            );
+            return BOOLE_FALSE;
+          }
+
+          // removing the allowance as it is already consumed
+          this.allowance.remove();
+          return BOOLE_TRUE;
         }
 
-        // removing the allowance as it is already consumed
-        this.allowTransfer.remove();
-        return BOOLE_TRUE;
+        // authorizations to burn KOINs to get VHP
+        if (allowance.type == fogata.allowance_type.BURN_KOIN) {
+          if (args.call!.entry_point != 0x859facc5) {
+            System.log("authorize failed for koin contract: not burn");
+            return BOOLE_FALSE;
+          }
+          if (!Arrays.equal(args.call!.caller, new PoB()._contractId)) {
+            System.log(
+              "authorize failed for koin contract: the caller of the burn must be PoB contract"
+            );
+            return BOOLE_FALSE;
+          }
+          if (!args.call!.data) {
+            System.log("authorize failed for koin contract: no data");
+            return BOOLE_FALSE;
+          }
+          const burnArgs = Protobuf.decode<token.burn_arguments>(
+            args.call!.data!,
+            token.burn_arguments.decode
+          );
+          if (allowance.koin_amount == 0) {
+            System.log(
+              "authorize failed for koin contract: no allowance defined for burn"
+            );
+            return BOOLE_FALSE;
+          }
+          if (
+            !Arrays.equal(allowance.account, burnArgs.from) ||
+            allowance.koin_amount < burnArgs.value
+          ) {
+            System.log(
+              `authorize failed for koin contract: invalid burn request: (${Base58.encode(
+                burnArgs.from!
+              )}, ${burnArgs.value}). Expected (${allowance.account!}, ${
+                allowance.koin_amount
+              })`
+            );
+            return BOOLE_FALSE;
+          }
+
+          // removing the allowance as it is already consumed
+          this.allowance.remove();
+          return BOOLE_TRUE;
+        }
+
+        System.log("authorize failed for koin contract: no allowance defined");
+        return BOOLE_FALSE;
       }
 
       // authorizations for POB contract
@@ -162,6 +213,8 @@ export class Fogata extends ConfigurablePool {
       );
       return BOOLE_FALSE;
     }
+
+    // TODO: authorize consumption of mana
 
     // TODO: return false for the rest of the cases
     // return BOOLE_FALSE;
@@ -232,8 +285,12 @@ export class Fogata extends ConfigurablePool {
     }
 
     // transfer through the contribute function to receive governance tokens
-    this.allowTransfer.put(
-      new fogata.koin_account(sponsorsContract._contractId, balance.value)
+    this.allowance.put(
+      new fogata.allowance(
+        fogata.allowance_type.TRANSFER_KOIN,
+        balance.value,
+        sponsorsContract._contractId
+      )
     );
     sponsorsContract.contribute(
       new tokenSponsors.contribute_args(this.contractId, balance.value)
@@ -353,6 +410,13 @@ export class Fogata extends ConfigurablePool {
         "internal error: koin balance < amount to burn"
       );
 
+      this.allowance.put(
+        new fogata.allowance(
+          fogata.allowance_type.BURN_KOIN,
+          amountToBurn,
+          this.contractId
+        )
+      );
       new PoB().burn(
         new pob.burn_arguments(amountToBurn, this.contractId, this.contractId)
       );
