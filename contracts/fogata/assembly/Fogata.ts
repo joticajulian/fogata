@@ -393,7 +393,7 @@ export class Fogata extends ConfigurablePool {
       return BOOLE_FALSE;
     }
 
-    const koinBalance = this.get_available_koins();
+    let koinBalance = this.get_available_koins();
     const vaporBalance = this.getSponsorsContract().balance_of(
       new tokenSponsors.balance_of_args(this.contractId)
     ).value;
@@ -420,6 +420,8 @@ export class Fogata extends ConfigurablePool {
       new PoB().burn(
         new pob.burn_arguments(amountToBurn, this.contractId, this.contractId)
       );
+
+      koinBalance -= amountToBurn;
     }
 
     // ideally all vapor should be withdrawn
