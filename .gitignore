@@ -1,6 +1,11 @@
 node_modules
-build
 **/assembly/proto/*.ts
 **/assembly/__tests__/*.map
 **/assembly/__tests__/*.wat
 .env
+contracts/sponsors/build
+contracts/fogata/build/*
+!contracts/fogata/build/release
+!contracts/fogata/build/fogata-abi.json
+contracts/fogata/build/release/*
+!contracts/fogata/build/release/contract.wasm
