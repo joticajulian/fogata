@@ -331,6 +331,11 @@ export class Fogata extends ConfigurablePool {
     );
     this.balancesBeneficiaries.remove(args.account!);
 
+    // remove this amount from the reserved koins
+    const reservedKoins = this.reservedKoins.get()!;
+    reservedKoins.value -= balance.value;
+    this.reservedKoins.put(reservedKoins);
+
     return BOOLE_TRUE;
   }
 
