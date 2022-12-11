@@ -90,10 +90,13 @@ export class ManaDelegable extends Ownable {
    * Get koin balance minus the reserved koins
    */
   get_available_koins(): u64 {
-    return (
-      this.getKoinContract().balanceOf(this.contractId) -
-      this.reservedKoins.get()!.value
+    const koinBalance = this.getKoinContract().balanceOf(this.contractId);
+    const reservedKoins = this.reservedKoins.get()!;
+    System.require(
+      koinBalance >= reservedKoins.value,
+      "internal error: koin balance should be greater than reserved koins"
     );
+    return koinBalance - reservedKoins.value;
   }
 
   /**

@@ -227,7 +227,6 @@ export class Fogata extends ConfigurablePool {
     }
 
     // TODO: authorize consumption of mana
-    // TODO: avoid negative numbers in the whole contract
     // TODO: add pausable
 
     // TODO: return false for the rest of the cases
@@ -333,6 +332,12 @@ export class Fogata extends ConfigurablePool {
 
     // remove this amount from the reserved koins
     const reservedKoins = this.reservedKoins.get()!;
+    System.require(
+      reservedKoins.value >= balance.value,
+      `internal error: reservedKoins must be greater than balance for beneficiary ${Base58.encode(
+        args.account!
+      )}`
+    );
     reservedKoins.value -= balance.value;
     this.reservedKoins.put(reservedKoins);
 
@@ -532,23 +537,35 @@ export class Fogata extends ConfigurablePool {
       previousUserStake.koin_withdrawn = 0;
       previousUserStake.vapor_withdrawn = 0;
     }
-    const maxKoin =
-      poolState.previous_stake == 0
-        ? 0
-        : multiplyAndDivide(
-            previousUserStake.stake,
-            poolState.previous_koin,
-            poolState.previous_stake
-          ) - previousUserStake.koin_withdrawn;
+    let maxKoin: u64 = 0;
+    let maxVapor: u64 = 0;
+    if (poolState.previous_stake > 0) {
+      const koinTimeframe = multiplyAndDivide(
+        previousUserStake.stake,
+        poolState.previous_koin,
+        poolState.previous_stake
+      );
+      System.require(
+        koinTimeframe >= previousUserStake.koin_withdrawn,
+        `internal error: koinTimeframe < previousUserStake.koin_withdrawn`
+      );
+      maxKoin = koinTimeframe - previousUserStake.koin_withdrawn;
 
-    const maxVapor =
-      poolState.previous_stake == 0
-        ? 0
-        : multiplyAndDivide(
-            previousUserStake.stake,
-            poolState.previous_vapor,
-            poolState.previous_stake
-          ) - previousUserStake.vapor_withdrawn;
+      const vaporTimeframe = multiplyAndDivide(
+        previousUserStake.stake,
+        poolState.previous_vapor,
+        poolState.previous_stake
+      );
+      System.require(
+        vaporTimeframe >= previousUserStake.vapor_withdrawn,
+        `internal error: vaporTimeframe < previousUserStake.vapor_withdrawn`
+      );
+      maxVapor = vaporTimeframe - previousUserStake.vapor_withdrawn;
+    }
+    System.require(
+      userVirtual >= maxKoin,
+      `internal error: userVirtual < maxKoin`
+    );
 
     return new fogata.balance(maxKoin, userVirtual - maxKoin, maxVapor);
   }
@@ -715,14 +732,19 @@ export class Fogata extends ConfigurablePool {
         previousUserStake.vapor_withdrawn = 0;
       }
 
-      const maxKoin =
-        poolState.previous_stake == 0
-          ? 0
-          : multiplyAndDivide(
-              previousUserStake.stake,
-              poolState.previous_koin,
-              poolState.previous_stake
-            ) - previousUserStake.koin_withdrawn;
+      let maxKoin: u64 = 0;
+      if (poolState.previous_stake > 0) {
+        const koinTimeframe = multiplyAndDivide(
+          previousUserStake.stake,
+          poolState.previous_koin,
+          poolState.previous_stake
+        );
+        System.require(
+          koinTimeframe >= previousUserStake.koin_withdrawn,
+          `internal error: koinTimeframe < previousUserStake.koin_withdrawn`
+        );
+        maxKoin = koinTimeframe - previousUserStake.koin_withdrawn;
+      }
       System.require(
         args.koin_amount <= maxKoin,
         `you can withdraw max ${maxKoin} satoshis of koin for this period. Requested ${args.koin_amount}`
@@ -796,14 +818,20 @@ export class Fogata extends ConfigurablePool {
       previousUserStake.vapor_withdrawn = 0;
     }
 
-    const maxVapor =
-      poolState.previous_stake == 0
-        ? 0
-        : multiplyAndDivide(
-            previousUserStake.stake,
-            poolState.previous_vapor,
-            poolState.previous_stake
-          ) - previousUserStake.vapor_withdrawn;
+    let maxVapor: u64 = 0;
+    if (poolState.previous_stake > 0) {
+      const vaporTimeframe = multiplyAndDivide(
+        previousUserStake.stake,
+        poolState.previous_vapor,
+        poolState.previous_stake
+      );
+      System.require(
+        vaporTimeframe >= previousUserStake.vapor_withdrawn,
+        `internal error: vaporTimeframe < previousUserStake.vapor_withdrawn`
+      );
+      maxVapor = vaporTimeframe - previousUserStake.vapor_withdrawn;
+    }
+
     System.require(maxVapor > 0, "no vapor available to be collected");
     previousUserStake.vapor_withdrawn += maxVapor;
     poolState.vapor_withdrawn += maxVapor;
