@@ -243,6 +243,24 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
+   * Get stake
+   * @external
+   * @readonly
+   */
+  get_stake(args: common.address): common.uint64 {
+    return this.stakes.get(args.account!)!;
+  }
+
+  /**
+   * Get stake in the previous period
+   * @external
+   * @readonly
+   */
+  get_previous_stake(args: common.address): fogata.previous_stake {
+    return this.previousStakes.get(args.account!)!;
+  }
+
+  /**
    * Get the state of the pool
    * @external
    * @readonly
@@ -448,11 +466,16 @@ export class Fogata extends ConfigurablePool {
     // update previous pool state, and set time for the next payment
     poolState.koin_withdrawn = 0;
     poolState.vapor_withdrawn = 0;
-    poolState.current_payment_time = poolState.next_payment_time;
-    poolState.next_payment_time += poolParams.payment_period;
     poolState.previous_koin = koinBalance;
     poolState.previous_vapor = vaporBalance;
     poolState.previous_stake = poolState.stake;
+    if (poolState.next_payment_time + poolParams.payment_period <= now) {
+      poolState.current_payment_time = now;
+      poolState.next_payment_time = now + poolParams.payment_period;
+    } else {
+      poolState.current_payment_time = poolState.next_payment_time;
+      poolState.next_payment_time += poolParams.payment_period;
+    }
     this.poolState.put(poolState);
 
     System.event("fogata.compute_koin_balances", new Uint8Array(0), []);
@@ -478,8 +501,9 @@ export class Fogata extends ConfigurablePool {
     if (previousUserStake.time < poolState.current_payment_time) {
       previousUserStake.stake = userStake.value;
       previousUserStake.time = poolState.current_payment_time;
+      previousUserStake.koin_withdrawn = 0;
+      previousUserStake.vapor_withdrawn = 0;
     }
-
     const maxKoin =
       poolState.previous_stake == 0
         ? 0
@@ -572,6 +596,8 @@ export class Fogata extends ConfigurablePool {
     if (previousUserStake.time < poolState.current_payment_time) {
       previousUserStake.stake = userStake.value;
       previousUserStake.time = poolState.current_payment_time;
+      previousUserStake.koin_withdrawn = 0;
+      previousUserStake.vapor_withdrawn = 0;
       this.previousStakes.put(args.account!, previousUserStake);
     }
 
@@ -657,6 +683,8 @@ export class Fogata extends ConfigurablePool {
       if (previousUserStake.time < poolState.current_payment_time) {
         previousUserStake.stake = userStake.value;
         previousUserStake.time = poolState.current_payment_time;
+        previousUserStake.koin_withdrawn = 0;
+        previousUserStake.vapor_withdrawn = 0;
       }
 
       const maxKoin =
@@ -736,6 +764,8 @@ export class Fogata extends ConfigurablePool {
     if (previousUserStake.time < poolState.current_payment_time) {
       previousUserStake.stake = userStake.value;
       previousUserStake.time = poolState.current_payment_time;
+      previousUserStake.koin_withdrawn = 0;
+      previousUserStake.vapor_withdrawn = 0;
     }
 
     const maxVapor =
