@@ -194,14 +194,16 @@ export class Fogata extends ConfigurablePool {
         Arrays.equal(args.call!.contract_id, System.getContractAddress("pob"))
       ) {
         switch (args.call!.entry_point) {
-          case 0x53192be1: { // register_public_key
+          case 0x53192be1: {
+            // register_public_key
             if (!this.only_owner()) {
               System.log("authorize failed for PoB contract: not owner");
               return BOOLE_FALSE;
             }
             return BOOLE_TRUE;
           }
-          case 0x859facc5: { // burn
+          case 0x859facc5: {
+            // burn
             System.log(
               "authorize failed for PoB contract: burn can only be called from compute_koin_balances"
             );
@@ -225,6 +227,8 @@ export class Fogata extends ConfigurablePool {
     }
 
     // TODO: authorize consumption of mana
+    // TODO: avoid negative numbers in the whole contract
+    // TODO: add pausable
 
     // TODO: return false for the rest of the cases
     // return BOOLE_FALSE;
@@ -253,7 +257,7 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Get stake
+   * Get stake of an account
    * @external
    * @readonly
    */
@@ -262,7 +266,8 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Get stake in the previous period
+   * Get stake of an account in the previous period
+   * and tokens withdrawn
    * @external
    * @readonly
    */
@@ -312,7 +317,8 @@ export class Fogata extends ConfigurablePool {
       return BOOLE_TRUE;
     }
 
-    // transfer through the contribute function to receive governance tokens
+    // the beneficiary is the sponsors contract. Make the transfer
+    // through the contribute function to receive governance tokens
     this.allowance.put(
       new fogata.allowance(
         fogata.allowance_type.TRANSFER_KOIN,
@@ -329,7 +335,7 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Transfer earnings to a beneficiary. It can be called by anyone
+   * Transfer earnings to all beneficiaries. It can be called by anyone
    * @external
    */
   pay_beneficiaries(): common.boole {
@@ -353,6 +359,11 @@ export class Fogata extends ConfigurablePool {
    * Note: this function doesn't update the poolState to reduce
    * calls to the storage. So, the poolState must be updated
    * outside of this function.
+   *
+   * Note2: the distribution of these payments to beneficiaries
+   * is not strictly linked to a timeframe. It can be done at any time
+   * (unlike payments to users which require the definition of a
+   * timeframe to avoid for cicles)
    */
   refreshBalances(lastPoolVirtual: u64, readonly: boolean = false): u64 {
     const reservedKoins = this.reservedKoins.get()!;
@@ -401,10 +412,11 @@ export class Fogata extends ConfigurablePool {
 
   /**
    * Function to be called periodically by anyone to define the
-   * distribution of Koins during the next period
+   * distribution of Koins and Vapor during the next period for all
+   * users.
    * @external
    */
-  compute_koin_balances(): common.boole {
+  compute_payments_timeframe(): common.boole {
     const now = System.getBlockField("header.timestamp")!.uint64_value;
     const poolState = this.poolState.get()!;
     const poolParams = this.poolParams.get()!;
@@ -421,6 +433,7 @@ export class Fogata extends ConfigurablePool {
       return BOOLE_FALSE;
     }
 
+    poolState.virtual = this.refreshBalances(poolState.virtual);
     let koinBalance = this.get_available_koins();
     const vaporBalance = this.getSponsorsContract().balance_of(
       new tokenSponsors.balance_of_args(this.contractId)
@@ -461,7 +474,7 @@ export class Fogata extends ConfigurablePool {
       poolState.previous_vapor - poolState.vapor_withdrawn;
     if (vaporNotWithdrawn > 0) {
       // this vapor was not withdrawn. The affected accounts will lose the rights
-      // over them, and they will be part to the whole community in the next period
+      // over them, and this vapor will be part to the whole community in the next period
       System.event(
         "fogata.vapor_not_withdrawn",
         Protobuf.encode(

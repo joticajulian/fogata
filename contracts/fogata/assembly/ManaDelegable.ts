@@ -78,7 +78,7 @@ export class ManaDelegable extends Ownable {
   }
 
   /**
-   * Get reserved koins (beneficiaries and mana supporters)
+   * Get reserved koins (for beneficiaries and mana supporters)
    * @external
    * @readonly
    */
