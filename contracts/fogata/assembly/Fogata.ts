@@ -193,17 +193,27 @@ export class Fogata extends ConfigurablePool {
       if (
         Arrays.equal(args.call!.contract_id, System.getContractAddress("pob"))
       ) {
-        if (args.call!.entry_point != 0x53192be1) {
-          System.log(
-            "authorize failed for PoB contract: not register_public_key"
-          );
-          return BOOLE_FALSE;
+        switch (args.call!.entry_point) {
+          case 0x53192be1: { // register_public_key
+            if (!this.only_owner()) {
+              System.log("authorize failed for PoB contract: not owner");
+              return BOOLE_FALSE;
+            }
+            return BOOLE_TRUE;
+          }
+          case 0x859facc5: { // burn
+            System.log(
+              "authorize failed for PoB contract: burn can only be called from compute_koin_balances"
+            );
+            return BOOLE_FALSE;
+          }
+          default: {
+            System.log(
+              "authorize failed for PoB contract: invalid entry point"
+            );
+            return BOOLE_FALSE;
+          }
         }
-        if (!this.only_owner()) {
-          System.log("authorize failed for PoB contract: not owner");
-          return BOOLE_FALSE;
-        }
-        return BOOLE_TRUE;
       }
 
       System.log(
