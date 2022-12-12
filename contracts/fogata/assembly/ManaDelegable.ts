@@ -9,6 +9,7 @@ import {
 import { Ownable } from "./Ownable";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
+import { sub } from "./utils";
 
 /**
  * ManaDelegable is a contract that has a reserved amount of koins,
@@ -92,11 +93,7 @@ export class ManaDelegable extends Ownable {
   get_available_koins(): u64 {
     const koinBalance = this.getKoinContract().balanceOf(this.contractId);
     const reservedKoins = this.reservedKoins.get()!;
-    System.require(
-      koinBalance >= reservedKoins.value,
-      "internal error: koin balance should be greater than reserved koins"
-    );
-    return koinBalance - reservedKoins.value;
+    return sub(koinBalance, reservedKoins.value, "get_available_koins");
   }
 
   /**
