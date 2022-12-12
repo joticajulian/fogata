@@ -1,3 +1,4 @@
+import { System } from "@koinos/sdk-as";
 import { u128 } from "as-bignum";
 /**
  * result = multiplier1 * multiplier2 / divider1
@@ -23,4 +24,13 @@ export function multiplyAndDivide(
       div
     ).toU64()
   );
+}
+
+/**
+ * return (a - b)
+ * It checks that there is no an overflow
+ */
+export function sub(a: u64, b: u64, ref: string): u64 {
+  System.require(a >= b, `internal error: substraction ref '${ref}' failed`);
+  return a - b;
 }
