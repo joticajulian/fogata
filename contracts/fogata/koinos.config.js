@@ -14,6 +14,7 @@ module.exports = {
     "./IPoB.ts",
     "./ISponsors.ts",
     "./Ownable.ts",
+    "./Pausable.ts",
     "./ManaDelegable.ts",
     "./ConfigurablePool.ts",
   ],

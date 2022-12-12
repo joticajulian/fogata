@@ -227,7 +227,6 @@ export class Fogata extends ConfigurablePool {
     }
 
     // TODO: authorize consumption of mana
-    // TODO: add pausable
 
     // TODO: return false for the rest of the cases
     // return BOOLE_FALSE;
@@ -288,6 +287,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   pay_beneficiary(args: common.address): common.boole {
+    this.require_unpaused();
     const balance = this.balancesBeneficiaries.get(args.account!)!;
     if (balance.value == 0) return BOOLE_TRUE;
 
@@ -429,6 +429,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   compute_payments_timeframe(): common.boole {
+    this.require_unpaused();
     const now = System.getBlockField("header.timestamp")!.uint64_value;
     const poolState = this.poolState.get()!;
     const poolParams = this.poolParams.get()!;
@@ -572,6 +573,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   stake(args: fogata.stake_args): common.boole {
+    this.require_unpaused();
     System.require(
       args.koin_amount > 0 || args.vhp_amount > 0,
       "either koin amount or vhp amount must be greater than 0"
@@ -673,6 +675,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   unstake(args: fogata.stake_args): common.boole {
+    this.require_unpaused();
     System.require(
       args.koin_amount > 0 || args.vhp_amount > 0,
       "either koin amount or vhp amount must be greater than 0"
@@ -798,6 +801,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   collect_vapor(args: common.address): common.boole {
+    this.require_unpaused();
     // get pool state, user stake, and virtual amount to withdraw
     const poolState = this.poolState.get()!;
     const userStake = this.stakes.get(args.account!)!;

@@ -6,7 +6,7 @@ import {
   authority,
   Base58,
 } from "@koinos/sdk-as";
-import { Ownable } from "./Ownable";
+import { Pausable } from "./Pausable";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 import { sub } from "./utils";
@@ -21,7 +21,7 @@ import { sub } from "./utils";
  * TODO: Think in a better name since "ManaDelegable" is not just mana
  * but also a transfer of koins to give this mana.
  */
-export class ManaDelegable extends Ownable {
+export class ManaDelegable extends Pausable {
   callArgs: System.getArgumentsReturn | null;
 
   koinContract: Token | null;
