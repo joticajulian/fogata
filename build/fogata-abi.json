@@ -673,5 +673,37 @@
         }
       }
     }
+  },
+  "events": {
+    "fogata.vapor_not_withdrawn": {
+      "argument": "common.uint64"
+    },
+    "fogata.compute_payments_timeframe": {
+      "argument": ""
+    },
+    "fogata.stake": {
+      "argument": "fogata.stake_event"
+    },
+    "fogata.unstake": {
+      "argument": "fogata.stake_event"
+    },
+    "fogata.set_pool_params": {
+      "argument": "fogata.pool_params"
+    },
+    "fogata.add_mana_delegation": {
+      "argument": "fogata.koin_account"
+    },
+    "fogata.remove_mana_delegation": {
+      "argument": "fogata.koin_account"
+    },
+    "pause": {
+      "argument": ""
+    },
+    "unpause": {
+      "argument": ""
+    },
+    "set_owner": {
+      "argument": "ownable.owner"
+    }
   }
 }

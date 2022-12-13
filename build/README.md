@@ -1,6 +1,6 @@
-### Fogata v0.2.0
+### Fogata v0.2.1
 
 property | value
 --- | ---
-size | 69405 bytes (67.78 kB)
-sha256 | fffe5a2f295b88a775dfa74a4d027b924b26bd64d372fa1974a43e2764d23b4c
+size | 69659 bytes (68.03 kB)
+sha256 | f0d044e98b9d5053c97256fd75613056d966ca45d240a1c783dc3615209d712e
