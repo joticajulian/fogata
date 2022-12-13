@@ -1,14 +1,14 @@
 {
   "targets": {
     "debug": {
-      "binaryFile": "./build/debug/contract.wasm",
-      "textFile": "./build/debug/contract.wat",
+      "binaryFile": "./build/debug/fogata.wasm",
+      "textFile": "./build/debug/fogata.wat",
       "sourceMap": true,
       "debug": true
     },
     "release": {
-      "binaryFile": "./build/release/contract.wasm",
-      "textFile": "./build/release/contract.wat",
+      "binaryFile": "./build/release/fogata.wasm",
+      "textFile": "./build/release/fogata.wat",
       "sourceMap": true,
       "optimizeLevel": 3,
       "shrinkLevel": 0,

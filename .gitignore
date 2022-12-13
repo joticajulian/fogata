@@ -4,8 +4,4 @@ node_modules
 **/assembly/__tests__/*.wat
 .env
 contracts/sponsors/build
-contracts/fogata/build/*
-!contracts/fogata/build/release
-!contracts/fogata/build/fogata-abi.json
-contracts/fogata/build/release/*
-!contracts/fogata/build/release/contract.wasm
+contracts/fogata/build
