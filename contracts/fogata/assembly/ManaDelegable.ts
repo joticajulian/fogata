@@ -109,8 +109,10 @@ export class ManaDelegable extends Pausable {
    * Transfer KOINs to the pool to support the mana consumption.
    * This amount will not be burned
    * @external
+   * @event fogata.add_mana_delegation fogata.koin_account
    */
   add_mana_delegation(args: fogata.koin_account): common.boole {
+    this.require_unpaused();
     const balance = this.balancesManaDelegators.get(args.account!)!;
     const reservedKoins = this.reservedKoins.get()!;
 
@@ -137,8 +139,10 @@ export class ManaDelegable extends Pausable {
   /**
    * Withdraw KOINs used in the mana consumption.
    * @external
+   * @event fogata.remove_mana_delegation fogata.koin_account
    */
   remove_mana_delegation(args: fogata.koin_account): common.boole {
+    this.require_unpaused();
     const balance = this.balancesManaDelegators.get(args.account!)!;
     const reservedKoins = this.reservedKoins.get()!;
 

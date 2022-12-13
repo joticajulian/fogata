@@ -39,6 +39,7 @@ export class Pausable extends Ownable {
   /**
    * Pause contract
    * @external
+   * @event pause
    */
   pause(): common.boole {
     System.require(
@@ -46,12 +47,14 @@ export class Pausable extends Ownable {
       "owner has not authorized to pause the contract"
     );
     this.paused.put(new common.boole(true));
+    System.event("pause", new Uint8Array(0), []);
     return new common.boole(true);
   }
 
   /**
    * Unpause contract
    * @external
+   * @event unpause
    */
   unpause(): common.boole {
     System.require(
@@ -59,6 +62,7 @@ export class Pausable extends Ownable {
       "owner has not authorized to unpause the contract"
     );
     this.paused.put(new common.boole(false));
+    System.event("unpause", new Uint8Array(0), []);
     return new common.boole(true);
   }
 }

@@ -27,7 +27,7 @@ async function main() {
   contractAccount.provider = provider;
   contractOwner.provider = provider;
 
-  const wasmFile = path.join(__dirname, "../build/release/contract.wasm");
+  const wasmFile = path.join(__dirname, "../build/release/fogata.wasm");
   const contract = new Contract({
     id: contractAccount.address,
     abi,

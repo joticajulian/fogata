@@ -25,6 +25,7 @@ export class ConfigurablePool extends ManaDelegable {
   /**
    * Set mining pool parameters
    * @external
+   * @event fogata.set_pool_params fogata.pool_params
    */
   set_pool_params(args: fogata.pool_params): common.boole {
     System.require(

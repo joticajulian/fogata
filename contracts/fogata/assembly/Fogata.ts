@@ -427,6 +427,8 @@ export class Fogata extends ConfigurablePool {
    * distribution of Koins and Vapor during the next period for all
    * users.
    * @external
+   * @event fogata.vapor_not_withdrawn common.uint64
+   * @event fogata.compute_payments_timeframe
    */
   compute_payments_timeframe(): common.boole {
     this.require_unpaused();
@@ -512,7 +514,7 @@ export class Fogata extends ConfigurablePool {
     }
     this.poolState.put(poolState);
 
-    System.event("fogata.compute_koin_balances", new Uint8Array(0), []);
+    System.event("fogata.compute_payments_timeframe", new Uint8Array(0), []);
     return BOOLE_TRUE;
   }
 
@@ -571,6 +573,7 @@ export class Fogata extends ConfigurablePool {
   /**
    * Deposit koin or vhp into the pool
    * @external
+   * @event fogata.stake fogata.stake_event
    */
   stake(args: fogata.stake_args): common.boole {
     this.require_unpaused();
@@ -673,6 +676,7 @@ export class Fogata extends ConfigurablePool {
   /**
    * Withdraw koin or vhp from the pool
    * @external
+   * @event fogata.unstake fogata.stake_event
    */
   unstake(args: fogata.stake_args): common.boole {
     this.require_unpaused();

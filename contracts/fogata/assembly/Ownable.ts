@@ -78,6 +78,7 @@ export class Ownable {
   /**
    * Set owner
    * @external
+   * @event set_owner ownable.owner
    */
   set_owner(newOwner: ownable.owner): common.boole {
     System.require(
