@@ -1,6 +1,6 @@
 {
   "name": "fogata",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "dependencies": {
     "koilib": "^5.2.2",
@@ -33,6 +33,7 @@
     "precompile": "koinos-precompiler-as contracts/fogata",
     "test": "asp --verbose --config contracts/fogata/as-pect.config.js",
     "deploy": "ts-node contracts/fogata/scripts/deployment.ts",
+    "prerelease": "copyfiles -u 4 contracts/fogata/build/release/fogata.wasm build && copyfiles -u 3 contracts/fogata/build/fogata-abi.json build && node getSha256.js",
     "sponsors:asbuild:debug": "asc contracts/sponsors/build/index.ts --config contracts/sponsors/asconfig.json --use abort= --target debug",
     "sponsors:asbuild:release": "asc contracts/sponsors/build/index.ts --config contracts/sponsors/asconfig.json --use abort= --target release",
     "sponsors:build": "yarn sponsors:precompile && yarn sponsors:asbuild:release",

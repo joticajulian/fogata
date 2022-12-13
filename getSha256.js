@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { version } = require("./package.json");
 
 function humanFileSize(size) {
   const i = size === 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
@@ -13,14 +14,22 @@ function humanFileSize(size) {
 
 const filePath = path.join(
   __dirname,
-  "contracts/fogata/build/release/contract.wasm"
+  "build/fogata.wasm"
 );
 const data = fs.readFileSync(filePath);
 const hash = crypto.createHash("sha256").update(data).digest("hex");
 
-console.log(`
-contract: fogata
-file:     ${filePath}
-size:     ${data.length} bytes (${humanFileSize(data.length)})
-sha256:   ${hash}
-`);
+const info = {
+contract: `fogata v${version}`,
+file: filePath,
+size: `${data.length} bytes (${humanFileSize(data.length)})`,
+sha256: hash,
+};
+
+console.log(info);
+fs.writeFileSync(path.join(__dirname, "build/README.md"), `### Fogata v${version}
+
+property | value
+--- | ---
+size | ${info.size}
+sha256 | ${info.sha256}`);
