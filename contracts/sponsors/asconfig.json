@@ -1,14 +1,14 @@
 {
   "targets": {
     "debug": {
-      "binaryFile": "./build/debug/contract.wasm",
-      "textFile": "./build/debug/contract.wat",
+      "binaryFile": "./build/debug/sponsors.wasm",
+      "textFile": "./build/debug/sponsors.wat",
       "sourceMap": true,
       "debug": true
     },
     "release": {
-      "binaryFile": "./build/release/contract.wasm",
-      "textFile": "./build/release/contract.wat",
+      "binaryFile": "./build/release/sponsors.wasm",
+      "textFile": "./build/release/sponsors.wat",
       "sourceMap": true,
       "optimizeLevel": 3,
       "shrinkLevel": 0,

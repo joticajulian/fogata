@@ -1,0 +1,261 @@
+{
+  "methods": {
+    "name": {
+      "argument": "",
+      "return": "common.str",
+      "description": "Get name of the token",
+      "entry_point": 2191741823,
+      "entry-point": "0x82a3537f",
+      "read_only": true,
+      "read-only": true
+    },
+    "symbol": {
+      "argument": "",
+      "return": "common.str",
+      "description": "Get the symbol of the token",
+      "entry_point": 3077209249,
+      "entry-point": "0xb76a7ca1",
+      "read_only": true,
+      "read-only": true
+    },
+    "decimals": {
+      "argument": "",
+      "return": "common.uint32",
+      "description": "Get the decimals of the token",
+      "entry_point": 4001430831,
+      "entry-point": "0xee80fd2f",
+      "read_only": true,
+      "read-only": true
+    },
+    "get_info": {
+      "argument": "",
+      "return": "token.info",
+      "description": "Get name, symbol and decimals",
+      "entry_point": 3179243600,
+      "entry-point": "0xbd7f6850",
+      "read_only": true,
+      "read-only": true
+    },
+    "total_supply": {
+      "argument": "",
+      "return": "common.uint64",
+      "description": "Get total supply",
+      "entry_point": 2967091508,
+      "entry-point": "0xb0da3934",
+      "read_only": true,
+      "read-only": true
+    },
+    "balance_of": {
+      "argument": "token.balance_of_args",
+      "return": "common.uint64",
+      "description": "Get balance of an account",
+      "entry_point": 1550980247,
+      "entry-point": "0x5c721497",
+      "read_only": true,
+      "read-only": true
+    },
+    "transfer": {
+      "argument": "token.transfer_args",
+      "return": "common.boole",
+      "description": "Transfer tokens",
+      "entry_point": 670398154,
+      "entry-point": "0x27f576ca",
+      "read_only": false,
+      "read-only": false
+    },
+    "burn": {
+      "argument": "token.burn_args",
+      "return": "common.boole",
+      "description": "Burn tokens",
+      "entry_point": 2241834181,
+      "entry-point": "0x859facc5",
+      "read_only": false,
+      "read-only": false
+    },
+    "contribute": {
+      "argument": "token.contribute_args",
+      "return": "common.boole",
+      "description": "Contribute with koins to the sponsors program, and get back governance tokens",
+      "entry_point": 2326215862,
+      "entry-point": "0x8aa73cb6",
+      "read_only": false,
+      "read-only": false
+    }
+  },
+  "types": "Cv0DCgt0b2tlbi5wcm90bxIFdG9rZW4aFGtvaW5vcy9vcHRpb25zLnByb3RvIk4KBGluZm8SEgoEbmFtZRgBIAEoCVIEbmFtZRIWCgZzeW1ib2wYAiABKAlSBnN5bWJvbBIaCghkZWNpbWFscxgDIAEoDVIIZGVjaW1hbHMiLQoPYmFsYW5jZV9vZl9hcmdzEhoKBW93bmVyGAEgASgMQgSAtRgGUgVvd25lciJZCg10cmFuc2Zlcl9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SFAoCdG8YAiABKAxCBIC1GAZSAnRvEhgKBXZhbHVlGAMgASgEQgIwAVIFdmFsdWUiRQoPY29udHJpYnV0ZV9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SGAoFdmFsdWUYAiABKARCAjABUgV2YWx1ZSI7CgltaW50X2FyZ3MSFAoCdG8YASABKAxCBIC1GAZSAnRvEhgKBXZhbHVlGAIgASgEQgIwAVIFdmFsdWUiPwoJYnVybl9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SGAoFdmFsdWUYAiABKARCAjABUgV2YWx1ZSIqCg5iYWxhbmNlX29iamVjdBIYCgV2YWx1ZRgBIAEoBEICMAFSBXZhbHVlYgZwcm90bzMK3wEKDGNvbW1vbi5wcm90bxIGY29tbW9uGhRrb2lub3Mvb3B0aW9ucy5wcm90byIbCgNzdHISFAoFdmFsdWUYASABKAlSBXZhbHVlIh4KBnVpbnQzMhIUCgV2YWx1ZRgBIAEoDVIFdmFsdWUiIgoGdWludDY0EhgKBXZhbHVlGAEgASgEQgIwAVIFdmFsdWUiHQoFYm9vbGUSFAoFdmFsdWUYASABKAhSBXZhbHVlIikKB2FkZHJlc3MSHgoHYWNjb3VudBgBIAEoDEIEgLUYBlIHYWNjb3VudGIGcHJvdG8z",
+  "koilib_types": {
+    "nested": {
+      "token": {
+        "nested": {
+          "info": {
+            "fields": {
+              "name": {
+                "type": "string",
+                "id": 1
+              },
+              "symbol": {
+                "type": "string",
+                "id": 2
+              },
+              "decimals": {
+                "type": "uint32",
+                "id": 3
+              }
+            }
+          },
+          "balance_of_args": {
+            "fields": {
+              "owner": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              }
+            }
+          },
+          "transfer_args": {
+            "fields": {
+              "from": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "to": {
+                "type": "bytes",
+                "id": 2,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "value": {
+                "type": "uint64",
+                "id": 3,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "contribute_args": {
+            "fields": {
+              "from": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "value": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "mint_args": {
+            "fields": {
+              "to": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "value": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "burn_args": {
+            "fields": {
+              "from": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "value": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "balance_object": {
+            "fields": {
+              "value": {
+                "type": "uint64",
+                "id": 1,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          }
+        }
+      },
+      "common": {
+        "nested": {
+          "str": {
+            "fields": {
+              "value": {
+                "type": "string",
+                "id": 1
+              }
+            }
+          },
+          "uint32": {
+            "fields": {
+              "value": {
+                "type": "uint32",
+                "id": 1
+              }
+            }
+          },
+          "uint64": {
+            "fields": {
+              "value": {
+                "type": "uint64",
+                "id": 1,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "boole": {
+            "fields": {
+              "value": {
+                "type": "bool",
+                "id": 1
+              }
+            }
+          },
+          "address": {
+            "fields": {
+              "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
