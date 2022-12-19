@@ -283,6 +283,21 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
+   * Set pool state
+   * @external
+   * TODO: this function was added for testing purposes. It MUST
+   * be removed in production
+   */
+  set_pool_state(args: fogata.pool_state): common.boole {
+    System.require(
+      this.only_owner(),
+      "owner has not authorized to update pool state"
+    );
+    this.poolState.put(args);
+    return BOOLE_TRUE;
+  }
+
+  /**
    * Transfer earnings to a beneficiary. It can be called by anyone
    * @external
    */
