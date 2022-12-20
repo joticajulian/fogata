@@ -8,6 +8,8 @@ import {
   authority,
   Base58,
   token,
+  value,
+  protocol,
 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { Sponsors } from "./ISponsors";
@@ -226,6 +228,81 @@ export class Fogata extends ConfigurablePool {
       return BOOLE_FALSE;
     }
 
+    // check it is for consumption of mana
+    if (args.type == authority.authorization_type.transaction_application) {
+      const operations = Protobuf.decode<value.list_type>(
+        System.getTransactionField("operations")!.message_value!.value!,
+        value.list_type.decode
+      ).values;
+      if (operations.length > 1) {
+        System.log("mana delegation failed: only 1 operation allowed");
+        return BOOLE_FALSE;
+      }
+
+      const operation = Protobuf.decode<protocol.operation>(
+        operations[0].message_value!.value!,
+        protocol.operation.decode
+      );
+      if (!operation.call_contract) {
+        System.log("mana delegation failed: not call contract operation");
+        return BOOLE_FALSE;
+      }
+
+      if (
+        !Arrays.equal(operation.call_contract!.contract_id, this.contractId)
+      ) {
+        System.log("mana delegation failed: not correct contract id");
+        return BOOLE_FALSE;
+      }
+
+      switch (operation.call_contract!.entry_point) {
+        // pay_beneficiary
+        case 0x399f9ad8: {
+          System.log("mana delegation failed: not implemented");
+          return BOOLE_FALSE;
+        }
+
+        // pay_beneficiaries
+        case 0xe13acaa7: {
+          System.log("mana delegation failed: not implemented");
+          return BOOLE_FALSE;
+        }
+
+        // compute_payments_timeframe
+        case 0x9ec7f405: {
+          System.log("mana delegation failed: not implemented");
+          return BOOLE_FALSE;
+        }
+
+        // stake
+        case 0xf4caf4ff: {
+          System.log("mana delegation failed: not implemented");
+          return BOOLE_FALSE;
+        }
+
+        // unstake
+        case 0x453c505b: {
+          System.log("mana delegation failed: not implemented");
+          return BOOLE_FALSE;
+        }
+
+        // collect_vapor
+        case 0x2348d281: {
+          System.log("mana delegation failed: not implemented");
+          return BOOLE_FALSE;
+        }
+
+        default: {
+          System.log(
+            `mana delegation failed: invalid entry point ${
+              operation.call_contract!.entry_point
+            }`
+          );
+          return BOOLE_FALSE;
+        }
+      }
+    }
+
     // TODO: authorize consumption of mana
 
     // TODO: return false for the rest of the cases
@@ -304,7 +381,10 @@ export class Fogata extends ConfigurablePool {
   pay_beneficiary(args: common.address): common.boole {
     this.require_unpaused();
     const balance = this.balancesBeneficiaries.get(args.account!)!;
-    if (balance.value == 0) return BOOLE_TRUE;
+    if (balance.value == 0) {
+      System.log(`beneficiary ${Base58.encode(args.account!)} has no balance`);
+      return BOOLE_TRUE;
+    }
 
     if (!this.auxBeneficiary) {
       const poolParams = this.poolParams.get()!;
