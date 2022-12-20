@@ -442,6 +442,11 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   pay_beneficiaries(): common.boole {
+    // update virtual balance and balances of beneficiaries
+    const poolState = this.poolState.get()!;
+    poolState.virtual = this.refreshBalances(poolState.virtual);
+    this.poolState.put(poolState);
+
     const poolParams = this.poolParams.get()!;
     for (let i = 0; i < poolParams.beneficiaries.length; i += 1) {
       this.auxBeneficiary = poolParams.beneficiaries[i];
