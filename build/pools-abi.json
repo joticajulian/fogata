@@ -1,0 +1,485 @@
+{
+  "methods": {
+    "submit_pool": {
+      "argument": "common.address",
+      "return": "common.boole",
+      "description": "Submit a new pool to revision",
+      "entry_point": 3400496205,
+      "entry-point": "0xcaaf744d",
+      "read_only": false,
+      "read-only": false
+    },
+    "approve_pool": {
+      "argument": "common.address",
+      "return": "common.boole",
+      "description": "Approve a pool",
+      "entry_point": 1860131056,
+      "entry-point": "0x6edf58f0",
+      "read_only": false,
+      "read-only": false
+    },
+    "remove_pool": {
+      "argument": "common.address",
+      "return": "common.boole",
+      "description": "Remove an approved pool",
+      "entry_point": 2079712985,
+      "entry-point": "0x7bf5e6d9",
+      "read_only": false,
+      "read-only": false
+    },
+    "get_submitted_pools": {
+      "argument": "pools.list_args",
+      "return": "pools.pools",
+      "description": "Get submitted pools",
+      "entry_point": 1464884751,
+      "entry-point": "0x57505e0f",
+      "read_only": true,
+      "read-only": true
+    },
+    "get_approved_pools": {
+      "argument": "pools.list_args",
+      "return": "pools.pools",
+      "description": "Get submitted pools",
+      "entry_point": 1971719026,
+      "entry-point": "0x75860b72",
+      "read_only": true,
+      "read-only": true
+    },
+    "set_owner": {
+      "argument": "ownable.owner",
+      "return": "common.boole",
+      "description": "Set owner",
+      "entry_point": 238845787,
+      "entry-point": "0x0e3c7f5b",
+      "read_only": false,
+      "read-only": false
+    },
+    "get_owner": {
+      "argument": "",
+      "return": "ownable.owner",
+      "description": "Get owner",
+      "entry_point": 3970686139,
+      "entry-point": "0xecabdcbb",
+      "read_only": true,
+      "read-only": true
+    }
+  },
+  "types": "Ct8BCgxjb21tb24ucHJvdG8SBmNvbW1vbhoUa29pbm9zL29wdGlvbnMucHJvdG8iGwoDc3RyEhQKBXZhbHVlGAEgASgJUgV2YWx1ZSIeCgZ1aW50MzISFAoFdmFsdWUYASABKA1SBXZhbHVlIiIKBnVpbnQ2NBIYCgV2YWx1ZRgBIAEoBEICMAFSBXZhbHVlIh0KBWJvb2xlEhQKBXZhbHVlGAEgASgIUgV2YWx1ZSIpCgdhZGRyZXNzEh4KB2FjY291bnQYASABKAxCBIC1GAZSB2FjY291bnRiBnByb3RvMwpfCg1vd25hYmxlLnByb3RvEgdvd25hYmxlGhRrb2lub3Mvb3B0aW9ucy5wcm90byInCgVvd25lchIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50YgZwcm90bzMKvw4KC3Bvb2xzLnByb3RvEgVwb29scxoUa29pbm9zL29wdGlvbnMucHJvdG8ifAoEcG9vbBIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50EisKD3N1Ym1pc3Npb25fdGltZRgCIAEoBEICMAFSDnN1Ym1pc3Npb25UaW1lEicKDWFwcHJvdmFsX3RpbWUYAyABKARCAjABUgxhcHByb3ZhbFRpbWUiKgoFcG9vbHMSIQoFdmFsdWUYASADKAsyCy5wb29scy5wb29sUgV2YWx1ZSJtCglsaXN0X2FyZ3MSGgoFc3RhcnQYASABKAxCBIC1GAZSBXN0YXJ0EhQKBWxpbWl0GAIgASgFUgVsaW1pdBIuCglkaXJlY3Rpb24YAyABKA4yEC5wb29scy5kaXJlY3Rpb25SCWRpcmVjdGlvbiJ0CgpzdGFrZV9hcmdzEh4KB2FjY291bnQYASABKAxCBIC1GAZSB2FjY291bnQSIwoLa29pbl9hbW91bnQYAiABKARCAjABUgprb2luQW1vdW50EiEKCnZocF9hbW91bnQYAyABKARCAjABUgl2aHBBbW91bnQijwEKC3N0YWtlX2V2ZW50Eh4KB2FjY291bnQYASABKAxCBIC1GAZSB2FjY291bnQSIwoLa29pbl9hbW91bnQYAiABKARCAjABUgprb2luQW1vdW50EiEKCnZocF9hbW91bnQYAyABKARCAjABUgl2aHBBbW91bnQSGAoFc3Rha2UYBCABKARCAjABUgVzdGFrZSKaAQoOcHJldmlvdXNfc3Rha2USGAoFc3Rha2UYASABKARCAjABUgVzdGFrZRIWCgR0aW1lGAIgASgEQgIwAVIEdGltZRIpCg5rb2luX3dpdGhkcmF3bhgDIAEoBEICMAFSDWtvaW5XaXRoZHJhd24SKwoPdmFwb3Jfd2l0aGRyYXduGAQgASgEQgIwAVIOdmFwb3JXaXRoZHJhd24ieAoHYmFsYW5jZRIjCgtrb2luX2Ftb3VudBgBIAEoBEICMAFSCmtvaW5BbW91bnQSIQoKdmhwX2Ftb3VudBgCIAEoBEICMAFSCXZocEFtb3VudBIlCgx2YXBvcl9hbW91bnQYAyABKARCAjABUgt2YXBvckFtb3VudCJTCgxrb2luX2FjY291bnQSHgoHYWNjb3VudBgBIAEoDEIEgLUYBlIHYWNjb3VudBIjCgtrb2luX2Ftb3VudBgCIAEoBEICMAFSCmtvaW5BbW91bnQiewoJYWxsb3dhbmNlEikKBHR5cGUYASABKA4yFS5wb29scy5hbGxvd2FuY2VfdHlwZVIEdHlwZRIjCgtrb2luX2Ftb3VudBgCIAEoBEICMAFSCmtvaW5BbW91bnQSHgoHYWNjb3VudBgDIAEoDEIEgLUYBlIHYWNjb3VudCJNCgtiZW5lZmljaWFyeRIeCgdhZGRyZXNzGAEgASgMQgSAtRgGUgdhZGRyZXNzEh4KCnBlcmNlbnRhZ2UYAiABKA1SCnBlcmNlbnRhZ2UivgEKC3Bvb2xfcGFyYW1zEhIKBG5hbWUYASABKAlSBG5hbWUSFAoFaW1hZ2UYAiABKAlSBWltYWdlEiAKC2Rlc2NyaXB0aW9uGAMgASgJUgtkZXNjcmlwdGlvbhI4Cg1iZW5lZmljaWFyaWVzGAQgAygLMhIucG9vbHMuYmVuZWZpY2lhcnlSDWJlbmVmaWNpYXJpZXMSKQoOcGF5bWVudF9wZXJpb2QYBSABKARCAjABUg1wYXltZW50UGVyaW9kIoEDCgpwb29sX3N0YXRlEhgKBXN0YWtlGAEgASgEQgIwAVIFc3Rha2USHAoHdmlydHVhbBgCIAEoBEICMAFSB3ZpcnR1YWwSKQoOcHJldmlvdXNfc3Rha2UYAyABKARCAjABUg1wcmV2aW91c1N0YWtlEicKDXByZXZpb3VzX2tvaW4YBCABKARCAjABUgxwcmV2aW91c0tvaW4SNAoUY3VycmVudF9wYXltZW50X3RpbWUYBSABKARCAjABUhJjdXJyZW50UGF5bWVudFRpbWUSLgoRbmV4dF9wYXltZW50X3RpbWUYBiABKARCAjABUg9uZXh0UGF5bWVudFRpbWUSKQoOa29pbl93aXRoZHJhd24YByABKARCAjABUg1rb2luV2l0aGRyYXduEikKDnByZXZpb3VzX3ZhcG9yGAggASgEQgIwAVINcHJldmlvdXNWYXBvchIrCg92YXBvcl93aXRoZHJhd24YCSABKARCAjABUg52YXBvcldpdGhkcmF3bioqCglkaXJlY3Rpb24SDQoJYXNjZW5kaW5nEAASDgoKZGVzY2VuZGluZxABKkEKDmFsbG93YW5jZV90eXBlEg0KCVVOREVGSU5FRBAAEhEKDVRSQU5TRkVSX0tPSU4QARINCglCVVJOX0tPSU4QAmIGcHJvdG8z",
+  "koilib_types": {
+    "nested": {
+      "common": {
+        "nested": {
+          "str": {
+            "fields": {
+              "value": {
+                "type": "string",
+                "id": 1
+              }
+            }
+          },
+          "uint32": {
+            "fields": {
+              "value": {
+                "type": "uint32",
+                "id": 1
+              }
+            }
+          },
+          "uint64": {
+            "fields": {
+              "value": {
+                "type": "uint64",
+                "id": 1,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "boole": {
+            "fields": {
+              "value": {
+                "type": "bool",
+                "id": 1
+              }
+            }
+          },
+          "address": {
+            "fields": {
+              "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ownable": {
+        "nested": {
+          "owner": {
+            "fields": {
+              "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              }
+            }
+          }
+        }
+      },
+      "pools": {
+        "nested": {
+          "pool": {
+            "fields": {
+              "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "submission_time": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "approval_time": {
+                "type": "uint64",
+                "id": 3,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "pools": {
+            "fields": {
+              "value": {
+                "rule": "repeated",
+                "type": "pool",
+                "id": 1
+              }
+            }
+          },
+          "direction": {
+            "values": {
+              "ascending": 0,
+              "descending": 1
+            }
+          },
+          "list_args": {
+            "fields": {
+              "start": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "limit": {
+                "type": "int32",
+                "id": 2
+              },
+              "direction": {
+                "type": "direction",
+                "id": 3
+              }
+            }
+          },
+          "stake_args": {
+            "fields": {
+              "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "koin_amount": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "vhp_amount": {
+                "type": "uint64",
+                "id": 3,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "stake_event": {
+            "fields": {
+              "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "koin_amount": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "vhp_amount": {
+                "type": "uint64",
+                "id": 3,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "stake": {
+                "type": "uint64",
+                "id": 4,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "previous_stake": {
+            "fields": {
+              "stake": {
+                "type": "uint64",
+                "id": 1,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "time": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "koin_withdrawn": {
+                "type": "uint64",
+                "id": 3,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "vapor_withdrawn": {
+                "type": "uint64",
+                "id": 4,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "balance": {
+            "fields": {
+              "koin_amount": {
+                "type": "uint64",
+                "id": 1,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "vhp_amount": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "vapor_amount": {
+                "type": "uint64",
+                "id": 3,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "koin_account": {
+            "fields": {
+              "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "koin_amount": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "allowance_type": {
+            "values": {
+              "UNDEFINED": 0,
+              "TRANSFER_KOIN": 1,
+              "BURN_KOIN": 2
+            }
+          },
+          "allowance": {
+            "fields": {
+              "type": {
+                "type": "allowance_type",
+                "id": 1
+              },
+              "koin_amount": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "account": {
+                "type": "bytes",
+                "id": 3,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              }
+            }
+          },
+          "beneficiary": {
+            "fields": {
+              "address": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "percentage": {
+                "type": "uint32",
+                "id": 2
+              }
+            }
+          },
+          "pool_params": {
+            "fields": {
+              "name": {
+                "type": "string",
+                "id": 1
+              },
+              "image": {
+                "type": "string",
+                "id": 2
+              },
+              "description": {
+                "type": "string",
+                "id": 3
+              },
+              "beneficiaries": {
+                "rule": "repeated",
+                "type": "beneficiary",
+                "id": 4
+              },
+              "payment_period": {
+                "type": "uint64",
+                "id": 5,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          },
+          "pool_state": {
+            "fields": {
+              "stake": {
+                "type": "uint64",
+                "id": 1,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "virtual": {
+                "type": "uint64",
+                "id": 2,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "previous_stake": {
+                "type": "uint64",
+                "id": 3,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "previous_koin": {
+                "type": "uint64",
+                "id": 4,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "current_payment_time": {
+                "type": "uint64",
+                "id": 5,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "next_payment_time": {
+                "type": "uint64",
+                "id": 6,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "koin_withdrawn": {
+                "type": "uint64",
+                "id": 7,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "previous_vapor": {
+                "type": "uint64",
+                "id": 8,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              },
+              "vapor_withdrawn": {
+                "type": "uint64",
+                "id": 9,
+                "options": {
+                  "jstype": "JS_STRING"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "events": {
+    "pools.submit_pool": {
+      "argument": "pools.pool"
+    },
+    "pools.approve_pool": {
+      "argument": "common.address"
+    },
+    "pools.revoke_pool": {
+      "argument": "common.address"
+    },
+    "set_owner": {
+      "argument": "ownable.owner"
+    }
+  }
+}

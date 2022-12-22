@@ -5,3 +5,4 @@ node_modules
 .env
 contracts/sponsors/build
 contracts/fogata/build
+contracts/pools/build
