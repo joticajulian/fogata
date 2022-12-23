@@ -8,8 +8,6 @@ import {
   authority,
   Base58,
   token,
-  value,
-  protocol,
 } from "@koinos/sdk-as";
 import { PoB } from "./IPoB";
 import { Sponsors } from "./ISponsors";
@@ -228,6 +226,7 @@ export class Fogata extends ConfigurablePool {
       return BOOLE_FALSE;
     }
 
+    /*
     // check it is for consumption of mana
     if (args.type == authority.authorization_type.transaction_application) {
       const operations = Protobuf.decode<value.list_type>(
@@ -302,8 +301,7 @@ export class Fogata extends ConfigurablePool {
         }
       }
     }
-
-    // TODO: authorize consumption of mana
+    */
 
     // TODO: return false for the rest of the cases
     // return BOOLE_FALSE;

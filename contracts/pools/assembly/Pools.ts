@@ -58,7 +58,7 @@ export class Pools extends Ownable {
   /**
    * Submit a new pool to revision
    * @external
-   * @event pools.submit_pool pools.pool
+   * @event pools.submit_pool common.address
    */
   submit_pool(args: common.address): common.boole {
     //const poolOwner = new IOwnable(args.account!).get_owner().account!;
@@ -100,14 +100,14 @@ export class Pools extends Ownable {
     submittedPool!.approval_time = now;
     this.approvedPools.put(args.account!, submittedPool!);
     this.submittedPools.remove(args.account!);
-    System.event("pools.approved_pool", this.callArgs!.args, [args.account!]);
+    System.event("pools.approve_pool", this.callArgs!.args, [args.account!]);
     return BOOLE_TRUE;
   }
 
   /**
    * Remove an approved pool
    * @external
-   * @event pools.revoke_pool common.address
+   * @event pools.remove_pool common.address
    */
   remove_pool(args: common.address): common.boole {
     System.require(this.only_owner(), "operation not authorized by the owner");
@@ -119,6 +119,7 @@ export class Pools extends Ownable {
     );
     if (submittedPool) this.submittedPools.remove(args.account!);
     if (approvedPool) this.approvedPools.remove(args.account!);
+    System.event("pools.remove_pool", this.callArgs!.args, [args.account!]);
     return BOOLE_TRUE;
   }
 
