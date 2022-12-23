@@ -45,6 +45,15 @@
       "read_only": true,
       "read-only": true
     },
+    "set_pool_state": {
+      "argument": "fogata.pool_state",
+      "return": "common.boole",
+      "description": "Set pool state",
+      "entry_point": 1053132370,
+      "entry-point": "0x3ec58652",
+      "read_only": false,
+      "read-only": false
+    },
     "pay_beneficiary": {
       "argument": "common.address",
       "return": "common.boole",
