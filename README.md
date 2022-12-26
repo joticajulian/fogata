@@ -14,7 +14,7 @@ The Owner is the creator of the pool and the one that can define the parameters 
 - Percentages for beneficiaries: Profits destinated to the node operator and/or other entities.
 - Reburn period: This defines the frequency of the reburns, and it also calculates the amount of KOIN that each user can withdraw.
 
-Also, in testnet and in the launch of the first fogata pool in the mainnet, the owner has the option to pause the contract, which stops payments, deposits, and withdrawals, and it will be used only to resolve bugs in the first month. After that, the pauser will be removed.
+Also, in testnet and in the launch of the first fogata pool in the mainnet, the owner has the option to pause the contract, which stops payments, deposits, and withdrawals, and it will be used only to resolve bugs in the first month. After that, the pauser will be removed (and the upgradability of the contract will be locked as well).
 
 ## Stake
 
@@ -26,7 +26,7 @@ The participants can unstake at any time. And this unstake can be in VHP or KOIN
 
 ## Reburn period and distribution of KOIN
 
-One of the challenges in the design of this pool was the logic to distribute KOINs to the participants. Some of the important points are:
+One of the challenges in the design of this pool was the logic to distribute KOINs to the participants. Some of the important points desired in fogata are:
 
 - It must define a limit of KOIN for each user depending on the stake.
 - It needs to take into account only the stake used during the block production. That is, if the user stakes more KOIN or VHP in the last instant, this change should not be taken into account in the current distribution of KOIN, but in a next period.
