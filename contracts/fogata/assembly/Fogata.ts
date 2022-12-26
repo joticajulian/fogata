@@ -644,6 +644,43 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
+   * Function to get the balance of KOIN or VAPOR of an
+   * specific account. This balance is calculated from the
+   * current snapshot.
+   */
+  getBalanceToken(
+    snapshotUserStake: fogata.snapshot_stake,
+    poolState: fogata.pool_state,
+    token: string
+  ): u64 {
+    System.require(
+      token == "koin" || token == "vapor",
+      `internal error: invalid token ${token}`
+    );
+
+    if (poolState.snapshot_stake == 0) return 0;
+
+    const snapshotToken =
+      token == "koin" ? poolState.snapshot_koin : poolState.snapshot_vapor;
+    const amountWithdrawn =
+      token == "koin"
+        ? snapshotUserStake.koin_withdrawn
+        : snapshotUserStake.vapor_withdrawn;
+
+    let amountSnapshot = multiplyAndDivide(
+      snapshotUserStake.stake,
+      snapshotToken,
+      poolState.snapshot_stake
+    );
+    amountSnapshot = sub(
+      amountSnapshot,
+      amountWithdrawn,
+      `getBalanceToken ${token}`
+    );
+    return amountSnapshot;
+  }
+
+  /**
    * koin/vhp balance of an account
    * @external
    * @readonly
@@ -665,34 +702,18 @@ export class Fogata extends ConfigurablePool {
       true
     );
 
-    let maxKoin: u64 = 0;
-    let maxVapor: u64 = 0;
-    if (poolState.snapshot_stake > 0) {
-      const koinTimeframe = multiplyAndDivide(
-        snapshotUserStake.stake,
-        poolState.snapshot_koin,
-        poolState.snapshot_stake
-      );
-      maxKoin = sub(
-        koinTimeframe,
-        snapshotUserStake.koin_withdrawn,
-        "balance_of 1"
-      );
-
-      const vaporTimeframe = multiplyAndDivide(
-        snapshotUserStake.stake,
-        poolState.snapshot_vapor,
-        poolState.snapshot_stake
-      );
-      maxVapor = sub(
-        vaporTimeframe,
-        snapshotUserStake.vapor_withdrawn,
-        "balance_of 2"
-      );
-    }
-
-    const estimatedVhp = sub(userVirtual, maxKoin, "balance_of 3");
-    return new fogata.balance(maxKoin, estimatedVhp, maxVapor);
+    const balanceKoin = this.getBalanceToken(
+      snapshotUserStake,
+      poolState,
+      "koin"
+    );
+    const balanceVapor = this.getBalanceToken(
+      snapshotUserStake,
+      poolState,
+      "vapor"
+    );
+    const balanceVhp = sub(userVirtual, balanceKoin, "balance_of 1");
+    return new fogata.balance(balanceKoin, balanceVhp, balanceVapor);
   }
 
   /**
@@ -846,26 +867,17 @@ export class Fogata extends ConfigurablePool {
       userStake
     );
 
-    if (args.koin_amount > 0) {
-      // the maximum amount of koin to withdraw is calculated from
-      // the snapshot of koin balances
+    const balanceKoin = this.getBalanceToken(
+      snapshotUserStake,
+      poolState,
+      "koin"
+    );
+    const balanceVhp = sub(userVirtual, balanceKoin, "unstake 1");
 
-      let maxKoin: u64 = 0;
-      if (poolState.snapshot_stake > 0) {
-        const koinTimeframe = multiplyAndDivide(
-          snapshotUserStake.stake,
-          poolState.snapshot_koin,
-          poolState.snapshot_stake
-        );
-        maxKoin = sub(
-          koinTimeframe,
-          snapshotUserStake.koin_withdrawn,
-          "unstake 1"
-        );
-      }
+    if (args.koin_amount > 0) {
       System.require(
-        args.koin_amount <= maxKoin,
-        `you can withdraw max ${maxKoin} satoshis of koin for this period. Requested ${args.koin_amount}`
+        args.koin_amount <= balanceKoin,
+        `you can withdraw max ${balanceKoin} satoshis of koin for this period. Requested ${args.koin_amount}`
       );
       snapshotUserStake.koin_withdrawn += args.koin_amount;
       poolState.koin_withdrawn += args.koin_amount;
@@ -880,6 +892,10 @@ export class Fogata extends ConfigurablePool {
     }
 
     if (args.vhp_amount > 0) {
+      System.require(
+        args.vhp_amount <= balanceVhp,
+        `you can withdraw max ${balanceVhp} satoshis of vhp. Requested ${args.vhp_amount}`
+      );
       const transferStatus2 = this.getVhpContract().transfer(
         this.contractId,
         args.account!,
@@ -930,26 +946,22 @@ export class Fogata extends ConfigurablePool {
       userStake
     );
 
-    let maxVapor: u64 = 0;
-    if (poolState.snapshot_stake > 0) {
-      const vaporTimeframe = multiplyAndDivide(
-        snapshotUserStake.stake,
-        poolState.snapshot_vapor,
-        poolState.snapshot_stake
-      );
-      maxVapor = sub(
-        vaporTimeframe,
-        snapshotUserStake.vapor_withdrawn,
-        "collect_vapor 1"
-      );
-    }
+    const balanceVapor = this.getBalanceToken(
+      snapshotUserStake,
+      poolState,
+      "vapor"
+    );
 
-    System.require(maxVapor > 0, "no vapor available to be collected");
-    snapshotUserStake.vapor_withdrawn += maxVapor;
-    poolState.vapor_withdrawn += maxVapor;
+    System.require(balanceVapor > 0, "no vapor available to be collected");
+    snapshotUserStake.vapor_withdrawn += balanceVapor;
+    poolState.vapor_withdrawn += balanceVapor;
 
     const transferStatus1 = this.getSponsorsContract().transfer(
-      new tokenSponsors.transfer_args(this.contractId, args.account!, maxVapor)
+      new tokenSponsors.transfer_args(
+        this.contractId,
+        args.account!,
+        balanceVapor
+      )
     ).value;
     System.require(transferStatus1 == true, "transfer of vapor rejected");
     this.snapshotStakes.put(args.account!, snapshotUserStake);
