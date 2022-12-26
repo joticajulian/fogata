@@ -535,17 +535,14 @@ export class Fogata extends ConfigurablePool {
     const poolState = this.poolState.get()!;
     const poolParams = this.poolParams.get()!;
 
-    if (now < poolState.next_snapshot) {
-      System.log("it is not time to reburn");
-      return BOOLE_FALSE;
-    }
+    System.require(now >= poolState.next_snapshot, "it is not time to reburn");
 
     if (poolState.next_snapshot == 0) {
       poolState.current_snapshot = now;
       poolState.next_snapshot = now + poolParams.payment_period;
       this.poolState.put(poolState);
       System.log("snapshot initialized");
-      return BOOLE_FALSE;
+      return BOOLE_TRUE;
     }
 
     poolState.virtual = this.refreshBalances(poolState.virtual);
