@@ -27,7 +27,7 @@ async function main() {
     abi,
     provider,
     bytecode: fs.readFileSync(
-      path.join(__dirname, "../build/release/contract.wasm")
+      path.join(__dirname, "../build/release/sponsors.wasm")
     ),
     options: {
       payer: accountWithFunds.address,

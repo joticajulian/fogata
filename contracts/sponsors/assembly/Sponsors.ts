@@ -75,7 +75,7 @@ export class Sponsors {
   }
 
   /**
-   * Get name, symbol and decimals
+   * Get name, symbol, decimals, and description
    * @external
    * @readonly
    */
