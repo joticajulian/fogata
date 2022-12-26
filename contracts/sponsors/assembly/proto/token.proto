@@ -8,6 +8,7 @@ message info {
    string name = 1;
    string symbol = 2;
    uint32 decimals = 3;
+   string description = 4;
 }
 
 message balance_of_args {

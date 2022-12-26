@@ -80,7 +80,17 @@ export class Sponsors {
    * @readonly
    */
   get_info(): token.info {
-    return new token.info(this._name, this._symbol, this._decimals);
+    return new token.info(
+      this._name,
+      this._symbol,
+      this._decimals,
+      [
+        "Sponsors contract aims to fund any type of proposal/project",
+        "with KOIN. The selection of the proposals is defined by the contributors",
+        "of KOIN, that is, the holders of the token VAPOR. The more VAPOR",
+        "you have the more weight you have in the vote.",
+      ].join(" ")
+    );
   }
 
   /**
@@ -111,23 +121,22 @@ export class Sponsors {
     const value = args.value;
 
     const caller = System.getCaller();
-    if (
-      !Arrays.equal(from, caller.caller) &&
-      !System.checkAuthority(
-        authority.authorization_type.contract_call,
-        from,
-        this.callArgs!.args
-      )
-    ) {
-      System.log("from has not authorized transfer");
-      return new common.boole(false);
-    }
+    System.require(
+      Arrays.equal(from, caller.caller) ||
+        System.checkAuthority(
+          authority.authorization_type.contract_call,
+          from,
+          this.callArgs!.args
+        ),
+      "from has not authorized transfer"
+    );
 
     let fromBalance = this.balances.get(from)!;
-    if (fromBalance.value < value) {
-      System.log("'from' has insufficient balance");
-      return new common.boole(false);
-    }
+    System.require(
+      fromBalance.value >= value,
+      "'from' has insufficient balance"
+    );
+
     fromBalance.value -= value;
     this.balances.put(from, fromBalance);
 
@@ -178,23 +187,21 @@ export class Sponsors {
     const value = args.value;
 
     const caller = System.getCaller();
-    if (
-      !Arrays.equal(from, caller.caller) &&
-      !System.checkAuthority(
-        authority.authorization_type.contract_call,
-        from,
-        this.callArgs!.args
-      )
-    ) {
-      System.log("from has not authorized the burn");
-      return new common.boole(false);
-    }
+    System.require(
+      Arrays.equal(from, caller.caller) ||
+        System.checkAuthority(
+          authority.authorization_type.contract_call,
+          from,
+          this.callArgs!.args
+        ),
+      "from has not authorized the burn"
+    );
 
     let fromBalance = this.balances.get(from)!;
-    if (fromBalance.value < value) {
-      System.log("'from' has insufficient balance");
-      return new common.boole(false);
-    }
+    System.require(
+      fromBalance.value >= value,
+      "'from' has insufficient balance"
+    );
 
     const supply = this.supply.get()!;
     fromBalance.value -= value;
