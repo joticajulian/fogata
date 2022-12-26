@@ -17,9 +17,9 @@ message stake_event {
    uint64 stake = 4 [jstype = JS_STRING];
 }
 
-message previous_stake {
+message snapshot_stake {
    uint64 stake = 1 [jstype = JS_STRING];
-   uint64 time = 2 [jstype = JS_STRING];
+   uint64 current_snapshot = 2 [jstype = JS_STRING];
    uint64 koin_withdrawn = 3 [jstype = JS_STRING];
    uint64 vapor_withdrawn = 4 [jstype = JS_STRING];
 }
@@ -63,11 +63,11 @@ message pool_params {
 message pool_state {
    uint64 stake = 1 [jstype = JS_STRING];
    uint64 virtual = 2 [jstype = JS_STRING]; // total virtual balance (koin + vhp)
-   uint64 previous_stake = 3 [jstype = JS_STRING];
-   uint64 previous_koin = 4 [jstype = JS_STRING];
-   uint64 current_payment_time = 5 [jstype = JS_STRING];
-   uint64 next_payment_time = 6 [jstype = JS_STRING];
+   uint64 snapshot_stake = 3 [jstype = JS_STRING];
+   uint64 snapshot_koin = 4 [jstype = JS_STRING];
+   uint64 current_snapshot = 5 [jstype = JS_STRING];
+   uint64 next_snapshot = 6 [jstype = JS_STRING];
    uint64 koin_withdrawn = 7 [jstype = JS_STRING];
-   uint64 previous_vapor = 8 [jstype = JS_STRING];
+   uint64 snapshot_vapor = 8 [jstype = JS_STRING];
    uint64 vapor_withdrawn = 9 [jstype = JS_STRING];
 }
