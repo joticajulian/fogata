@@ -339,6 +339,24 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
+   * Get accounts
+   * @external
+   * @readonly
+   */
+  get_accounts(args: common.list_args): common.addresses {
+    const direction =
+      args.direction == common.direction.ascending
+        ? Storage.Direction.Ascending
+        : Storage.Direction.Descending;
+    const accounts = this.stakes.getManyKeys(
+      args.start ? args.start! : new Uint8Array(0),
+      args.limit,
+      direction
+    );
+    return new common.addresses(accounts);
+  }
+
+  /**
    * Get snapshot of an account taken in the
    * previous period and tokens withdrawn
    * @external

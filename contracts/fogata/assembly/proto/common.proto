@@ -23,3 +23,18 @@ message boole {
 message address {
     bytes account = 1 [(koinos.btype) = ADDRESS];
 }
+
+enum direction {
+   ascending = 0;
+   descending = 1;
+}
+
+message list_args {
+   bytes start = 1 [(koinos.btype) = ADDRESS];
+   int32 limit = 2;
+   direction direction = 3;
+}
+
+message addresses {
+   repeated bytes accounts = 1 [(koinos.btype) = ADDRESS];
+}
