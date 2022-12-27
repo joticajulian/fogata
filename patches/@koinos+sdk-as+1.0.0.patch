@@ -1,3 +1,45 @@
+diff --git a/node_modules/@koinos/sdk-as/assembly/systemCalls.ts b/node_modules/@koinos/sdk-as/assembly/systemCalls.ts
+index 5d14d99..5eeb91a 100644
+--- a/node_modules/@koinos/sdk-as/assembly/systemCalls.ts
++++ b/node_modules/@koinos/sdk-as/assembly/systemCalls.ts
+@@ -1003,12 +1003,13 @@ export namespace System {
+   }
+ 
+   export class ProtoDatabaseObject<TMessage> {
+-    value: TMessage;
++    value: TMessage | null;
+     key: Uint8Array | null;
+ 
+     constructor(obj: system_calls.database_object, decoder: (reader: Reader, length: i32) => TMessage) {
+       this.key = obj.key;
+-      this.value = Protobuf.decode<TMessage>(obj.value!, decoder);
++      this.value = null;
++      if (obj.value) this.value = Protobuf.decode<TMessage>(obj.value!, decoder);
+     }
+   }
+ 
+diff --git a/node_modules/@koinos/sdk-as/assembly/util/storage.ts b/node_modules/@koinos/sdk-as/assembly/util/storage.ts
+index 0a259c4..b3b0d77 100644
+--- a/node_modules/@koinos/sdk-as/assembly/util/storage.ts
++++ b/node_modules/@koinos/sdk-as/assembly/util/storage.ts
+@@ -157,7 +157,7 @@ export namespace Storage {
+       do {
+         // @ts-ignore key is always initialized when reaching this code
+         const obj = direction == Direction.Ascending ? System.getNextObject<Uint8Array, TValue>(this.space, key, this.valueDecoder) : System.getPrevObject<Uint8Array, TValue>(this.space, key, this.valueDecoder);
+-        if (obj) {
++        if (obj && obj.key) {
+           key = obj.key!;
+           if (offsetKey instanceof Uint8Array) {
+             // @ts-ignore key here is a Uint8Array
+@@ -168,7 +168,7 @@ export namespace Storage {
+           }
+         }
+ 
+-        done = obj == null || result.length >= limit;
++        done = obj == null || obj.key == null || result.length >= limit;
+       } while (!done);
+ 
+       return result;
 diff --git a/node_modules/@koinos/sdk-as/assembly/util/token.ts b/node_modules/@koinos/sdk-as/assembly/util/token.ts
 index ae4d486..1f21980 100644
 --- a/node_modules/@koinos/sdk-as/assembly/util/token.ts
