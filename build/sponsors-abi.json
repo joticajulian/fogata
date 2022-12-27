@@ -30,7 +30,7 @@
     "get_info": {
       "argument": "",
       "return": "token.info",
-      "description": "Get name, symbol and decimals",
+      "description": "Get name, symbol, decimals, and description",
       "entry_point": 3179243600,
       "entry-point": "0xbd7f6850",
       "read_only": true,
@@ -82,7 +82,7 @@
       "read-only": false
     }
   },
-  "types": "Cv0DCgt0b2tlbi5wcm90bxIFdG9rZW4aFGtvaW5vcy9vcHRpb25zLnByb3RvIk4KBGluZm8SEgoEbmFtZRgBIAEoCVIEbmFtZRIWCgZzeW1ib2wYAiABKAlSBnN5bWJvbBIaCghkZWNpbWFscxgDIAEoDVIIZGVjaW1hbHMiLQoPYmFsYW5jZV9vZl9hcmdzEhoKBW93bmVyGAEgASgMQgSAtRgGUgVvd25lciJZCg10cmFuc2Zlcl9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SFAoCdG8YAiABKAxCBIC1GAZSAnRvEhgKBXZhbHVlGAMgASgEQgIwAVIFdmFsdWUiRQoPY29udHJpYnV0ZV9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SGAoFdmFsdWUYAiABKARCAjABUgV2YWx1ZSI7CgltaW50X2FyZ3MSFAoCdG8YASABKAxCBIC1GAZSAnRvEhgKBXZhbHVlGAIgASgEQgIwAVIFdmFsdWUiPwoJYnVybl9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SGAoFdmFsdWUYAiABKARCAjABUgV2YWx1ZSIqCg5iYWxhbmNlX29iamVjdBIYCgV2YWx1ZRgBIAEoBEICMAFSBXZhbHVlYgZwcm90bzMK3wEKDGNvbW1vbi5wcm90bxIGY29tbW9uGhRrb2lub3Mvb3B0aW9ucy5wcm90byIbCgNzdHISFAoFdmFsdWUYASABKAlSBXZhbHVlIh4KBnVpbnQzMhIUCgV2YWx1ZRgBIAEoDVIFdmFsdWUiIgoGdWludDY0EhgKBXZhbHVlGAEgASgEQgIwAVIFdmFsdWUiHQoFYm9vbGUSFAoFdmFsdWUYASABKAhSBXZhbHVlIikKB2FkZHJlc3MSHgoHYWNjb3VudBgBIAEoDEIEgLUYBlIHYWNjb3VudGIGcHJvdG8z",
+  "types": "Cp8ECgt0b2tlbi5wcm90bxIFdG9rZW4aFGtvaW5vcy9vcHRpb25zLnByb3RvInAKBGluZm8SEgoEbmFtZRgBIAEoCVIEbmFtZRIWCgZzeW1ib2wYAiABKAlSBnN5bWJvbBIaCghkZWNpbWFscxgDIAEoDVIIZGVjaW1hbHMSIAoLZGVzY3JpcHRpb24YBCABKAlSC2Rlc2NyaXB0aW9uIi0KD2JhbGFuY2Vfb2ZfYXJncxIaCgVvd25lchgBIAEoDEIEgLUYBlIFb3duZXIiWQoNdHJhbnNmZXJfYXJncxIYCgRmcm9tGAEgASgMQgSAtRgGUgRmcm9tEhQKAnRvGAIgASgMQgSAtRgGUgJ0bxIYCgV2YWx1ZRgDIAEoBEICMAFSBXZhbHVlIkUKD2NvbnRyaWJ1dGVfYXJncxIYCgRmcm9tGAEgASgMQgSAtRgGUgRmcm9tEhgKBXZhbHVlGAIgASgEQgIwAVIFdmFsdWUiOwoJbWludF9hcmdzEhQKAnRvGAEgASgMQgSAtRgGUgJ0bxIYCgV2YWx1ZRgCIAEoBEICMAFSBXZhbHVlIj8KCWJ1cm5fYXJncxIYCgRmcm9tGAEgASgMQgSAtRgGUgRmcm9tEhgKBXZhbHVlGAIgASgEQgIwAVIFdmFsdWUiKgoOYmFsYW5jZV9vYmplY3QSGAoFdmFsdWUYASABKARCAjABUgV2YWx1ZWIGcHJvdG8zCt8BCgxjb21tb24ucHJvdG8SBmNvbW1vbhoUa29pbm9zL29wdGlvbnMucHJvdG8iGwoDc3RyEhQKBXZhbHVlGAEgASgJUgV2YWx1ZSIeCgZ1aW50MzISFAoFdmFsdWUYASABKA1SBXZhbHVlIiIKBnVpbnQ2NBIYCgV2YWx1ZRgBIAEoBEICMAFSBXZhbHVlIh0KBWJvb2xlEhQKBXZhbHVlGAEgASgIUgV2YWx1ZSIpCgdhZGRyZXNzEh4KB2FjY291bnQYASABKAxCBIC1GAZSB2FjY291bnRiBnByb3RvMw==",
   "koilib_types": {
     "nested": {
       "token": {
@@ -100,6 +100,10 @@
               "decimals": {
                 "type": "uint32",
                 "id": 3
+              },
+              "description": {
+                "type": "string",
+                "id": 4
               }
             }
           },

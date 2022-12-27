@@ -27,12 +27,21 @@
       "read_only": true,
       "read-only": true
     },
-    "get_previous_stake": {
+    "get_accounts": {
+      "argument": "common.list_args",
+      "return": "common.addresses",
+      "description": "Get accounts",
+      "entry_point": 1344170881,
+      "entry-point": "0x501e6b81",
+      "read_only": true,
+      "read-only": true
+    },
+    "get_snapshot_stake": {
       "argument": "common.address",
-      "return": "fogata.previous_stake",
-      "description": "Get stake of an account in the previous period and tokens withdrawn",
-      "entry_point": 1036053741,
-      "entry-point": "0x3dc0eced",
+      "return": "fogata.snapshot_stake",
+      "description": "Get snapshot of an account taken in the previous period and tokens withdrawn",
+      "entry_point": 913774395,
+      "entry-point": "0x3677173b",
       "read_only": true,
       "read-only": true
     },
@@ -72,12 +81,12 @@
       "read_only": false,
       "read-only": false
     },
-    "compute_payments_timeframe": {
+    "reburn_and_snapshot": {
       "argument": "",
       "return": "common.boole",
-      "description": "Function to be called periodically by anyone to define the distribution of Koins and Vapor during the next period for all users.",
-      "entry_point": 2663904261,
-      "entry-point": "0x9ec7f405",
+      "description": "Function to be called periodically by anyone to reburn the KOINs that was not withdrawn in the previous snapshot and take a new snapshot. The vapor that was not withdrawn is distributed to all users.",
+      "entry_point": 2129709095,
+      "entry-point": "0x7ef0c827",
       "read_only": false,
       "read-only": false
     },
@@ -217,7 +226,7 @@
       "read-only": true
     }
   },
-  "types": "Cv4LCgxmb2dhdGEucHJvdG8SBmZvZ2F0YRoUa29pbm9zL29wdGlvbnMucHJvdG8idAoKc3Rha2VfYXJncxIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50EiMKC2tvaW5fYW1vdW50GAIgASgEQgIwAVIKa29pbkFtb3VudBIhCgp2aHBfYW1vdW50GAMgASgEQgIwAVIJdmhwQW1vdW50Io8BCgtzdGFrZV9ldmVudBIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50EiMKC2tvaW5fYW1vdW50GAIgASgEQgIwAVIKa29pbkFtb3VudBIhCgp2aHBfYW1vdW50GAMgASgEQgIwAVIJdmhwQW1vdW50EhgKBXN0YWtlGAQgASgEQgIwAVIFc3Rha2UimgEKDnByZXZpb3VzX3N0YWtlEhgKBXN0YWtlGAEgASgEQgIwAVIFc3Rha2USFgoEdGltZRgCIAEoBEICMAFSBHRpbWUSKQoOa29pbl93aXRoZHJhd24YAyABKARCAjABUg1rb2luV2l0aGRyYXduEisKD3ZhcG9yX3dpdGhkcmF3bhgEIAEoBEICMAFSDnZhcG9yV2l0aGRyYXduIngKB2JhbGFuY2USIwoLa29pbl9hbW91bnQYASABKARCAjABUgprb2luQW1vdW50EiEKCnZocF9hbW91bnQYAiABKARCAjABUgl2aHBBbW91bnQSJQoMdmFwb3JfYW1vdW50GAMgASgEQgIwAVILdmFwb3JBbW91bnQiUwoMa29pbl9hY2NvdW50Eh4KB2FjY291bnQYASABKAxCBIC1GAZSB2FjY291bnQSIwoLa29pbl9hbW91bnQYAiABKARCAjABUgprb2luQW1vdW50InwKCWFsbG93YW5jZRIqCgR0eXBlGAEgASgOMhYuZm9nYXRhLmFsbG93YW5jZV90eXBlUgR0eXBlEiMKC2tvaW5fYW1vdW50GAIgASgEQgIwAVIKa29pbkFtb3VudBIeCgdhY2NvdW50GAMgASgMQgSAtRgGUgdhY2NvdW50Ik0KC2JlbmVmaWNpYXJ5Eh4KB2FkZHJlc3MYASABKAxCBIC1GAZSB2FkZHJlc3MSHgoKcGVyY2VudGFnZRgCIAEoDVIKcGVyY2VudGFnZSK/AQoLcG9vbF9wYXJhbXMSEgoEbmFtZRgBIAEoCVIEbmFtZRIUCgVpbWFnZRgCIAEoCVIFaW1hZ2USIAoLZGVzY3JpcHRpb24YAyABKAlSC2Rlc2NyaXB0aW9uEjkKDWJlbmVmaWNpYXJpZXMYBCADKAsyEy5mb2dhdGEuYmVuZWZpY2lhcnlSDWJlbmVmaWNpYXJpZXMSKQoOcGF5bWVudF9wZXJpb2QYBSABKARCAjABUg1wYXltZW50UGVyaW9kIoEDCgpwb29sX3N0YXRlEhgKBXN0YWtlGAEgASgEQgIwAVIFc3Rha2USHAoHdmlydHVhbBgCIAEoBEICMAFSB3ZpcnR1YWwSKQoOcHJldmlvdXNfc3Rha2UYAyABKARCAjABUg1wcmV2aW91c1N0YWtlEicKDXByZXZpb3VzX2tvaW4YBCABKARCAjABUgxwcmV2aW91c0tvaW4SNAoUY3VycmVudF9wYXltZW50X3RpbWUYBSABKARCAjABUhJjdXJyZW50UGF5bWVudFRpbWUSLgoRbmV4dF9wYXltZW50X3RpbWUYBiABKARCAjABUg9uZXh0UGF5bWVudFRpbWUSKQoOa29pbl93aXRoZHJhd24YByABKARCAjABUg1rb2luV2l0aGRyYXduEikKDnByZXZpb3VzX3ZhcG9yGAggASgEQgIwAVINcHJldmlvdXNWYXBvchIrCg92YXBvcl93aXRoZHJhd24YCSABKARCAjABUg52YXBvcldpdGhkcmF3bipBCg5hbGxvd2FuY2VfdHlwZRINCglVTkRFRklORUQQABIRCg1UUkFOU0ZFUl9LT0lOEAESDQoJQlVSTl9LT0lOEAJiBnByb3RvMwrfAQoMY29tbW9uLnByb3RvEgZjb21tb24aFGtvaW5vcy9vcHRpb25zLnByb3RvIhsKA3N0chIUCgV2YWx1ZRgBIAEoCVIFdmFsdWUiHgoGdWludDMyEhQKBXZhbHVlGAEgASgNUgV2YWx1ZSIiCgZ1aW50NjQSGAoFdmFsdWUYASABKARCAjABUgV2YWx1ZSIdCgVib29sZRIUCgV2YWx1ZRgBIAEoCFIFdmFsdWUiKQoHYWRkcmVzcxIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50YgZwcm90bzMKXwoNb3duYWJsZS5wcm90bxIHb3duYWJsZRoUa29pbm9zL29wdGlvbnMucHJvdG8iJwoFb3duZXISHgoHYWNjb3VudBgBIAEoDEIEgLUYBlIHYWNjb3VudGIGcHJvdG8zCv0DCgt0b2tlbi5wcm90bxIFdG9rZW4aFGtvaW5vcy9vcHRpb25zLnByb3RvIk4KBGluZm8SEgoEbmFtZRgBIAEoCVIEbmFtZRIWCgZzeW1ib2wYAiABKAlSBnN5bWJvbBIaCghkZWNpbWFscxgDIAEoDVIIZGVjaW1hbHMiLQoPYmFsYW5jZV9vZl9hcmdzEhoKBW93bmVyGAEgASgMQgSAtRgGUgVvd25lciJZCg10cmFuc2Zlcl9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SFAoCdG8YAiABKAxCBIC1GAZSAnRvEhgKBXZhbHVlGAMgASgEQgIwAVIFdmFsdWUiRQoPY29udHJpYnV0ZV9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SGAoFdmFsdWUYAiABKARCAjABUgV2YWx1ZSI7CgltaW50X2FyZ3MSFAoCdG8YASABKAxCBIC1GAZSAnRvEhgKBXZhbHVlGAIgASgEQgIwAVIFdmFsdWUiPwoJYnVybl9hcmdzEhgKBGZyb20YASABKAxCBIC1GAZSBGZyb20SGAoFdmFsdWUYAiABKARCAjABUgV2YWx1ZSIqCg5iYWxhbmNlX29iamVjdBIYCgV2YWx1ZRgBIAEoBEICMAFSBXZhbHVlYgZwcm90bzM=",
+  "types": "CocMCgxmb2dhdGEucHJvdG8SBmZvZ2F0YRoUa29pbm9zL29wdGlvbnMucHJvdG8idAoKc3Rha2VfYXJncxIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50EiMKC2tvaW5fYW1vdW50GAIgASgEQgIwAVIKa29pbkFtb3VudBIhCgp2aHBfYW1vdW50GAMgASgEQgIwAVIJdmhwQW1vdW50Io8BCgtzdGFrZV9ldmVudBIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50EiMKC2tvaW5fYW1vdW50GAIgASgEQgIwAVIKa29pbkFtb3VudBIhCgp2aHBfYW1vdW50GAMgASgEQgIwAVIJdmhwQW1vdW50EhgKBXN0YWtlGAQgASgEQgIwAVIFc3Rha2UisQEKDnNuYXBzaG90X3N0YWtlEhgKBXN0YWtlGAEgASgEQgIwAVIFc3Rha2USLQoQY3VycmVudF9zbmFwc2hvdBgCIAEoBEICMAFSD2N1cnJlbnRTbmFwc2hvdBIpCg5rb2luX3dpdGhkcmF3bhgDIAEoBEICMAFSDWtvaW5XaXRoZHJhd24SKwoPdmFwb3Jfd2l0aGRyYXduGAQgASgEQgIwAVIOdmFwb3JXaXRoZHJhd24ieAoHYmFsYW5jZRIjCgtrb2luX2Ftb3VudBgBIAEoBEICMAFSCmtvaW5BbW91bnQSIQoKdmhwX2Ftb3VudBgCIAEoBEICMAFSCXZocEFtb3VudBIlCgx2YXBvcl9hbW91bnQYAyABKARCAjABUgt2YXBvckFtb3VudCJTCgxrb2luX2FjY291bnQSHgoHYWNjb3VudBgBIAEoDEIEgLUYBlIHYWNjb3VudBIjCgtrb2luX2Ftb3VudBgCIAEoBEICMAFSCmtvaW5BbW91bnQifAoJYWxsb3dhbmNlEioKBHR5cGUYASABKA4yFi5mb2dhdGEuYWxsb3dhbmNlX3R5cGVSBHR5cGUSIwoLa29pbl9hbW91bnQYAiABKARCAjABUgprb2luQW1vdW50Eh4KB2FjY291bnQYAyABKAxCBIC1GAZSB2FjY291bnQiTQoLYmVuZWZpY2lhcnkSHgoHYWRkcmVzcxgBIAEoDEIEgLUYBlIHYWRkcmVzcxIeCgpwZXJjZW50YWdlGAIgASgNUgpwZXJjZW50YWdlIr8BCgtwb29sX3BhcmFtcxISCgRuYW1lGAEgASgJUgRuYW1lEhQKBWltYWdlGAIgASgJUgVpbWFnZRIgCgtkZXNjcmlwdGlvbhgDIAEoCVILZGVzY3JpcHRpb24SOQoNYmVuZWZpY2lhcmllcxgEIAMoCzITLmZvZ2F0YS5iZW5lZmljaWFyeVINYmVuZWZpY2lhcmllcxIpCg5wYXltZW50X3BlcmlvZBgFIAEoBEICMAFSDXBheW1lbnRQZXJpb2Qi8wIKCnBvb2xfc3RhdGUSGAoFc3Rha2UYASABKARCAjABUgVzdGFrZRIcCgd2aXJ0dWFsGAIgASgEQgIwAVIHdmlydHVhbBIpCg5zbmFwc2hvdF9zdGFrZRgDIAEoBEICMAFSDXNuYXBzaG90U3Rha2USJwoNc25hcHNob3Rfa29pbhgEIAEoBEICMAFSDHNuYXBzaG90S29pbhItChBjdXJyZW50X3NuYXBzaG90GAUgASgEQgIwAVIPY3VycmVudFNuYXBzaG90EicKDW5leHRfc25hcHNob3QYBiABKARCAjABUgxuZXh0U25hcHNob3QSKQoOa29pbl93aXRoZHJhd24YByABKARCAjABUg1rb2luV2l0aGRyYXduEikKDnNuYXBzaG90X3ZhcG9yGAggASgEQgIwAVINc25hcHNob3RWYXBvchIrCg92YXBvcl93aXRoZHJhd24YCSABKARCAjABUg52YXBvcldpdGhkcmF3bipBCg5hbGxvd2FuY2VfdHlwZRINCglVTkRFRklORUQQABIRCg1UUkFOU0ZFUl9LT0lOEAESDQoJQlVSTl9LT0lOEAJiBnByb3RvMwqqAwoMY29tbW9uLnByb3RvEgZjb21tb24aFGtvaW5vcy9vcHRpb25zLnByb3RvIhsKA3N0chIUCgV2YWx1ZRgBIAEoCVIFdmFsdWUiHgoGdWludDMyEhQKBXZhbHVlGAEgASgNUgV2YWx1ZSIiCgZ1aW50NjQSGAoFdmFsdWUYASABKARCAjABUgV2YWx1ZSIdCgVib29sZRIUCgV2YWx1ZRgBIAEoCFIFdmFsdWUiKQoHYWRkcmVzcxIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50Im4KCWxpc3RfYXJncxIaCgVzdGFydBgBIAEoDEIEgLUYBlIFc3RhcnQSFAoFbGltaXQYAiABKAVSBWxpbWl0Ei8KCWRpcmVjdGlvbhgDIAEoDjIRLmNvbW1vbi5kaXJlY3Rpb25SCWRpcmVjdGlvbiItCglhZGRyZXNzZXMSIAoIYWNjb3VudHMYASADKAxCBIC1GAZSCGFjY291bnRzKioKCWRpcmVjdGlvbhINCglhc2NlbmRpbmcQABIOCgpkZXNjZW5kaW5nEAFiBnByb3RvMwpfCg1vd25hYmxlLnByb3RvEgdvd25hYmxlGhRrb2lub3Mvb3B0aW9ucy5wcm90byInCgVvd25lchIeCgdhY2NvdW50GAEgASgMQgSAtRgGUgdhY2NvdW50YgZwcm90bzMK/QMKC3Rva2VuLnByb3RvEgV0b2tlbhoUa29pbm9zL29wdGlvbnMucHJvdG8iTgoEaW5mbxISCgRuYW1lGAEgASgJUgRuYW1lEhYKBnN5bWJvbBgCIAEoCVIGc3ltYm9sEhoKCGRlY2ltYWxzGAMgASgNUghkZWNpbWFscyItCg9iYWxhbmNlX29mX2FyZ3MSGgoFb3duZXIYASABKAxCBIC1GAZSBW93bmVyIlkKDXRyYW5zZmVyX2FyZ3MSGAoEZnJvbRgBIAEoDEIEgLUYBlIEZnJvbRIUCgJ0bxgCIAEoDEIEgLUYBlICdG8SGAoFdmFsdWUYAyABKARCAjABUgV2YWx1ZSJFCg9jb250cmlidXRlX2FyZ3MSGAoEZnJvbRgBIAEoDEIEgLUYBlIEZnJvbRIYCgV2YWx1ZRgCIAEoBEICMAFSBXZhbHVlIjsKCW1pbnRfYXJncxIUCgJ0bxgBIAEoDEIEgLUYBlICdG8SGAoFdmFsdWUYAiABKARCAjABUgV2YWx1ZSI/CglidXJuX2FyZ3MSGAoEZnJvbRgBIAEoDEIEgLUYBlIEZnJvbRIYCgV2YWx1ZRgCIAEoBEICMAFSBXZhbHVlIioKDmJhbGFuY2Vfb2JqZWN0EhgKBXZhbHVlGAEgASgEQgIwAVIFdmFsdWViBnByb3RvMw==",
   "koilib_types": {
     "nested": {
       "fogata": {
@@ -279,7 +288,7 @@
               }
             }
           },
-          "previous_stake": {
+          "snapshot_stake": {
             "fields": {
               "stake": {
                 "type": "uint64",
@@ -288,7 +297,7 @@
                   "jstype": "JS_STRING"
                 }
               },
-              "time": {
+              "current_snapshot": {
                 "type": "uint64",
                 "id": 2,
                 "options": {
@@ -442,28 +451,28 @@
                   "jstype": "JS_STRING"
                 }
               },
-              "previous_stake": {
+              "snapshot_stake": {
                 "type": "uint64",
                 "id": 3,
                 "options": {
                   "jstype": "JS_STRING"
                 }
               },
-              "previous_koin": {
+              "snapshot_koin": {
                 "type": "uint64",
                 "id": 4,
                 "options": {
                   "jstype": "JS_STRING"
                 }
               },
-              "current_payment_time": {
+              "current_snapshot": {
                 "type": "uint64",
                 "id": 5,
                 "options": {
                   "jstype": "JS_STRING"
                 }
               },
-              "next_payment_time": {
+              "next_snapshot": {
                 "type": "uint64",
                 "id": 6,
                 "options": {
@@ -477,7 +486,7 @@
                   "jstype": "JS_STRING"
                 }
               },
-              "previous_vapor": {
+              "snapshot_vapor": {
                 "type": "uint64",
                 "id": 8,
                 "options": {
@@ -535,6 +544,43 @@
           "address": {
             "fields": {
               "account": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              }
+            }
+          },
+          "direction": {
+            "values": {
+              "ascending": 0,
+              "descending": 1
+            }
+          },
+          "list_args": {
+            "fields": {
+              "start": {
+                "type": "bytes",
+                "id": 1,
+                "options": {
+                  "(koinos.btype)": "ADDRESS"
+                }
+              },
+              "limit": {
+                "type": "int32",
+                "id": 2
+              },
+              "direction": {
+                "type": "direction",
+                "id": 3
+              }
+            }
+          },
+          "addresses": {
+            "fields": {
+              "accounts": {
+                "rule": "repeated",
                 "type": "bytes",
                 "id": 1,
                 "options": {
@@ -687,7 +733,7 @@
     "fogata.vapor_not_withdrawn": {
       "argument": "common.uint64"
     },
-    "fogata.compute_payments_timeframe": {
+    "fogata.reburn_and_snapshot": {
       "argument": ""
     },
     "fogata.stake": {
