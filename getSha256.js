@@ -24,12 +24,24 @@ const info = {
 };
 
 console.log(info);
-fs.writeFileSync(
-  path.join(__dirname, "build/README.md"),
-  `### Fogata v${version}
+const readmePath = path.join(__dirname, "build/README.md");
+let readmeData = fs.readFileSync(readmePath, "utf8");
+readmeData = `## [Fogata v${version}](https://github.com/joticajulian/fogata/releases/tag/v${version}) (${new Date()
+  .toISOString()
+  .slice(0, 10)})
 
 property | value
 --- | ---
 size | ${info.size}
-sha256 | ${info.sha256}`
-);
+sha256 | ${info.sha256}
+
+### 🚀 Features
+
+-
+
+### 🐛 Bug Fixes
+
+-
+
+${readmeData}`;
+fs.writeFileSync(readmePath, readmeData);
