@@ -4,7 +4,7 @@
   "license": "MIT",
   "dependencies": {
     "koilib": "^5.2.2",
-    "koinos-precompiler-as": "^0.2.0",
+    "koinos-precompiler-as": "^0.3.0",
     "kondor-js": "^0.3.2",
     "patch-package": "^6.4.7",
     "postinstall-postinstall": "^2.1.0"
