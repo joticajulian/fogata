@@ -15,7 +15,7 @@ async function main() {
   if (!network) throw new Error(`network ${networkName} not found`);
   const provider = new Provider(network.rpcNodes);
   const accountWithFunds = Signer.fromWif(
-    network.accounts.manaSupporter.privateKey
+    network.accounts.manaSharer.privateKey
   );
   const contractAccount = Signer.fromWif(network.accounts.sponsors.privateKey);
   accountWithFunds.provider = provider;

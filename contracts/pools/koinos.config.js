@@ -19,19 +19,30 @@ module.exports = {
         "https://testnet.koinosblocks.com",
       ],
       accounts: {
-        manaSupporter: {
-          privateKey: process.env.HARBINGER_PRIVATE_KEY_MANA_SUPPORTER,
+        manaSharer: {
+          privateKey: process.env.HARBINGER_MANA_SHARER_PRIVATE_KEY,
         },
         contract: {
-          privateKey: process.env.HARBINGER_PRIVATE_KEY_CONTRACT_POOLS,
+          privateKey: process.env.HARBINGER_POOLS_CONTRACT_PRIVATE_KEY,
         },
         contractOwner: {
-          privateKey: process.env.HARBINGER_PRIVATE_KEY_CONTRACT_POOLS_OWNER,
+          privateKey: process.env.HARBINGER_POOLS_OWNER_PRIVATE_KEY,
         },
       },
     },
     mainnet: {
       rpcNodes: ["https://api.koinosblocks.com", "https://api.koinos.io"],
+      accounts: {
+        manaSharer: {
+          privateKey: process.env.MAINNET_MANA_SHARER_PRIVATE_KEY,
+        },
+        contract: {
+          privateKey: process.env.MAINNET_POOLS_CONTRACT_PRIVATE_KEY,
+        },
+        contractOwner: {
+          privateKey: process.env.MAINNET_POOLS_OWNER_PRIVATE_KEY,
+        },
+      },
     },
   },
 };
