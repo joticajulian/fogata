@@ -13,9 +13,9 @@ import { multiplyAndDivide } from "./utils";
 const SUPPLY_ID = 0;
 const BALANCES_SPACE_ID = 1;
 
-const TIME_1: u64 = 1672531200000; // Sunday, January 1, 2023 12:00:00 AM
-const TIME_2: u64 = 1704067200000; // Monday, January 1, 2024 12:00:00 AM
-const DECAY_PERIOD: u64 = 31536000000; // TIME_2 - TIME_1 = 1 year
+const TIME_1: u64 = 1677628800000; // Wednesday, March 1, 2023 12:00:00 AM
+const TIME_2: u64 = 1709251200000; // Friday, March 1, 2024 12:00:00 AM
+const DECAY_PERIOD: u64 = 31622400000; // TIME_2 - TIME_1 = 1 year
 const MAX_MINT_FACTOR: u64 = 20;
 
 export class Sponsors {
