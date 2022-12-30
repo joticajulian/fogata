@@ -23,6 +23,7 @@ async function main() {
     network.accounts.contractOwner.privateKey
   );
   const contractAccount = Signer.fromWif(network.accounts.contract.privateKey);
+  const sponsorsContractId = Signer.fromWif(network.accounts.sponsors.privateKey).address;
   accountWithFunds.provider = provider;
   contractAccount.provider = provider;
   contractOwner.provider = provider;
@@ -50,15 +51,23 @@ async function main() {
 
   const { operation: setPoolParams } = await contract.functions.set_pool_params(
     {
-      name: "fogata",
+      name: "jga",
       image:
         "https://cdn.pixabay.com/photo/2012/04/12/19/11/fire-30231_1280.png",
-      description: "koinos mining pool",
+      description: [
+        "Earn KOIN 🚀 and contribute to the Sponsors program to fund different",
+        "projects. You will also receive VAPOR which is used to vote for the",
+        "projects that will receive the funds.",
+      ].join(" "),
       beneficiaries: [
         {
-          address: "1AuJQxqqyBZXqqugTQZzXRVRmEYJtsMYQ8",
+          address: sponsorsContractId,
           percentage: 20000,
         },
+        {
+          address: "1NhWCUzmBZMGWVuz7gMF7iGnmiqCVgHpnZ",
+          percentage: 5000,
+        }
       ],
       payment_period: "86400000", // 1 day
     }

@@ -37,6 +37,9 @@ module.exports = {
         contractOwner: {
           privateKey: process.env.HARBINGER_FOGATA_OWNER_PRIVATE_KEY,
         },
+        sponsors: {
+          privateKey: process.env.HARBINGER_SPONSORS_CONTRACT_PRIVATE_KEY,
+        },
       },
     },
     mainnet: {
@@ -50,6 +53,9 @@ module.exports = {
         },
         contractOwner: {
           privateKey: process.env.MAINNET_FOGATA_OWNER_PRIVATE_KEY,
+        },
+        sponsors: {
+          privateKey: process.env.MAINNET_SPONSORS_CONTRACT_PRIVATE_KEY,
         },
       },
     },
