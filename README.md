@@ -1,6 +1,6 @@
 # Fogata
 
-Fogata is a mining pool for koinos blockchain. From the infrastucture perspective it is exactly the same infrastructure as solo mining: It requires a node running the koinos blockchain configured for block production. The difference is that the producer is **controlled by a smart contract**.
+Fogata is a mining pool for koinos blockchain. From the infrastructure perspective it is exactly the same infrastructure as solo mining: It requires a node running the koinos blockchain configured for block production. The difference is that the producer is **controlled by a smart contract**.
 
 This smart contract defines how a group of people can collaborate together to have a common address holding Virtual Hash Power (VHP), and use this VHP to produce blocks. The contract gives the production rights to a specific account, the node operator, who is responsible for providing the hardware and run the node for block production. This node operator receives a certain percentage of the profits made by the pool. The rest of the profits are distributed to the participants of the pool, and optionally to specific accounts defined as "beneficiaries" (like the sponsors contract, which will be explained later on).
 

@@ -12,15 +12,33 @@ function humanFileSize(size) {
   );
 }
 
-const filePath = path.join(__dirname, "build/fogata.wasm");
-const data = fs.readFileSync(filePath);
-const hash = crypto.createHash("sha256").update(data).digest("hex");
+const filePathMainnet = path.join(__dirname, "build/fogata.wasm");
+const filePathHarbinger = path.join(__dirname, "build/fogata-harbinger.wasm");
+const dataMainnet = fs.readFileSync(filePathMainnet);
+const dataHarbinger = fs.readFileSync(filePathHarbinger);
+const hashMainnet = crypto
+  .createHash("sha256")
+  .update(dataMainnet)
+  .digest("hex");
+const hashHarbinger = crypto
+  .createHash("sha256")
+  .update(dataHarbinger)
+  .digest("hex");
 
 const info = {
   contract: `fogata v${version}`,
-  file: filePath,
-  size: `${data.length} bytes (${humanFileSize(data.length)})`,
-  sha256: hash,
+  mainnet: {
+    file: filePathMainnet,
+    size: `${dataMainnet.length} bytes (${humanFileSize(dataMainnet.length)})`,
+    sha256: hashMainnet,
+  },
+  harbinger: {
+    file: filePathHarbinger,
+    size: `${dataHarbinger.length} bytes (${humanFileSize(
+      dataHarbinger.length
+    )})`,
+    sha256: hashHarbinger,
+  },
 };
 
 console.log(info);
@@ -32,8 +50,10 @@ readmeData = `## [Fogata v${version}](https://github.com/joticajulian/fogata/rel
 
 property | value
 --- | ---
-size | ${info.size}
-sha256 | ${info.sha256}
+size (mainnet) | ${info.mainnet.size}
+sha256 (mainnet) | ${info.mainnet.sha256}
+size (harbinger) | ${info.harbinger.size}
+sha256 (harbinger) | ${info.harbinger.sha256}
 
 ### 🚀 Features
 

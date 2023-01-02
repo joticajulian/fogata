@@ -317,7 +317,13 @@ export class Fogata extends ConfigurablePool {
   }
 
   getSponsorsContract(): Sponsors {
-    return new Sponsors(Base58.decode("1AuJQxqqyBZXqqugTQZzXRVRmEYJtsMYQ8"));
+    return new Sponsors(
+      Base58.decode(
+        BUILD_FOR_TESTING
+          ? "1AuJQxqqyBZXqqugTQZzXRVRmEYJtsMYQ8"
+          : "1KTasVrqvMBofMANKMCT3HMya16sfZPLFB"
+      )
+    );
   }
 
   /**

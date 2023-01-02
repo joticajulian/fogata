@@ -1,6 +1,6 @@
 {
   "name": "fogata",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "MIT",
   "dependencies": {
     "koilib": "^5.2.2",
@@ -27,13 +27,16 @@
     "yaml": "^2.1.3"
   },
   "scripts": {
-    "asbuild:debug": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target debug",
-    "asbuild:release": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target release",
+    "asbuild:debug": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target debug --use BUILD_FOR_TESTING=0",
+    "asbuild:release": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target release --use BUILD_FOR_TESTING=0",
+    "asbuild:harbinger:debug": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-harbinger.json --use abort= --target debug --use BUILD_FOR_TESTING=1",
+    "asbuild:harbinger:release": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-harbinger.json --use abort= --target release --use BUILD_FOR_TESTING=1",
     "build": "yarn precompile && yarn asbuild:release",
+    "build:harbinger": "yarn precompile && yarn asbuild:harbinger:release",
     "precompile": "koinos-precompiler-as contracts/fogata",
     "test": "asp --verbose --config contracts/fogata/as-pect.config.js",
     "deploy": "ts-node contracts/fogata/scripts/deployment.ts",
-    "prerelease": "copyfiles -u 4 contracts/fogata/build/release/fogata.wasm build && copyfiles -u 3 contracts/fogata/build/fogata-abi.json build && copyfiles -u 4 contracts/sponsors/build/release/sponsors.wasm build && copyfiles -u 3 contracts/sponsors/build/sponsors-abi.json build && copyfiles -u 4 contracts/pools/build/release/pools.wasm build && copyfiles -u 3 contracts/pools/build/pools-abi.json build && node getSha256.js",
+    "prerelease": "copyfiles -u 4 contracts/fogata/build/release/fogata.wasm build && copyfiles -u 4 contracts/fogata/build/release/fogata-harbinger.wasm build && copyfiles -u 3 contracts/fogata/build/fogata-abi.json build && copyfiles -u 4 contracts/sponsors/build/release/sponsors.wasm build && copyfiles -u 3 contracts/sponsors/build/sponsors-abi.json build && copyfiles -u 4 contracts/pools/build/release/pools.wasm build && copyfiles -u 3 contracts/pools/build/pools-abi.json build && node getSha256.js",
     "sponsors:asbuild:debug": "asc contracts/sponsors/build/index.ts --config contracts/sponsors/asconfig.json --use abort= --target debug",
     "sponsors:asbuild:release": "asc contracts/sponsors/build/index.ts --config contracts/sponsors/asconfig.json --use abort= --target release",
     "sponsors:build": "yarn sponsors:precompile && yarn sponsors:asbuild:release",

@@ -23,7 +23,9 @@ async function main() {
     network.accounts.contractOwner.privateKey
   );
   const contractAccount = Signer.fromWif(network.accounts.contract.privateKey);
-  const sponsorsContractId = Signer.fromWif(network.accounts.sponsors.privateKey).address;
+  const sponsorsContractId = Signer.fromWif(
+    network.accounts.sponsors.privateKey
+  ).address;
   accountWithFunds.provider = provider;
   contractAccount.provider = provider;
   contractOwner.provider = provider;
@@ -67,7 +69,7 @@ async function main() {
         {
           address: "1NhWCUzmBZMGWVuz7gMF7iGnmiqCVgHpnZ",
           percentage: 5000,
-        }
+        },
       ],
       payment_period: "86400000", // 1 day
     }
