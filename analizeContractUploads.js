@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const { Provider, utils } = require("koilib");
 
-const contractId = "16KZRu7TbjZZ8movNZnHcR2SmgqKDqJsoP";
+const contractId = "14iHqMGBznBM7xJXhkrQ266FgoFdymCqLM";
 
 const fogataVersions = [
   {
@@ -19,10 +19,22 @@ const fogataVersions = [
     hash: "8efb6d1708aa6aa6f692e8b4618bb136fc086e6857573f5c516ac90ec3fc855b",
     size: 73377,
   },
+  {
+    version: "0.4.1",
+    network: "harbinger",
+    hash: "f1963543970b2321158bd4546ed94c5145eaf720689fe33d74578091ceb72b79",
+    size: 73387,
+  },
+  {
+    version: "0.4.1",
+    network: "mainnet",
+    hash: "18f2b2c32b217fdb6700802c3681554ff017200e0d326481e40dcdeb751c2026",
+    size: 73377,
+  },
 ];
 
 (async () => {
-  const provider = new Provider(["https://harbinger-api.koinos.io"]);
+  const provider = new Provider(["https://api.koinos.io"]);
   let found = false;
   let seqNum = 0;
   let contractUploads = 0;
