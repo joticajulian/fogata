@@ -45,6 +45,10 @@ export class Fogata extends ConfigurablePool {
 
   allowance: Storage.Obj<fogata.allowance>;
 
+  // collect preferences for users
+
+  collectPreferences: Storage.Map<Uint8Array, fogata.collect_preferences>;
+
   constructor() {
     super();
 
@@ -393,6 +397,25 @@ export class Fogata extends ConfigurablePool {
       "owner has not authorized to update pool state"
     );
     this.poolState.put(args);
+    return BOOLE_TRUE;
+  }
+
+  /**
+   * Get user preferences
+   * @external
+   * @readonly
+   */
+  get_collect_preferences(args: common.address): fogata.collect_preferences {
+    return this.collectPreferences.get(args.account!)!;
+  }
+
+  /**
+   * Set user preferences
+   * @external
+   */
+  set_collect_preferences(args: fogata.collect_preferences): common.boole {
+    this.validateAuthority(args.account!);
+    this.collectPreferences.put(args.account!, args);
     return BOOLE_TRUE;
   }
 
@@ -972,6 +995,75 @@ export class Fogata extends ConfigurablePool {
       poolState,
       "vapor"
     );
+
+    System.require(balanceVapor > 0, "no vapor available to be collected");
+    snapshotUserStake.vapor_withdrawn += balanceVapor;
+    poolState.vapor_withdrawn += balanceVapor;
+
+    const transferStatus1 = this.getSponsorsContract().transfer(
+      new tokenSponsors.transfer_args(
+        this.contractId,
+        args.account!,
+        balanceVapor
+      )
+    ).value;
+    System.require(transferStatus1 == true, "transfer of vapor rejected");
+    this.snapshotStakes.put(args.account!, snapshotUserStake);
+    return BOOLE_TRUE;
+  }
+
+  /**
+   * Withdraw earnings of vapor and koin. Anyone can call this
+   * method
+   * @external
+   */
+  collect(args: common.address): common.boole {
+    this.require_unpaused();
+    // get pool state, user stake, and virtual amount to withdraw
+    const poolState = this.poolState.get()!;
+    const userStake = this.stakes.get(args.account!)!;
+
+    const snapshotUserStake = this.updateSnapshotUser(
+      args.account!,
+      poolState,
+      userStake
+    );
+
+    const balanceVapor = this.getBalanceToken(
+      snapshotUserStake,
+      poolState,
+      "vapor"
+    );
+
+    const balanceKoin = this.getBalanceToken(
+      snapshotUserStake,
+      poolState,
+      "koin"
+    );
+
+    const collectPreferences = this.collectPreferences.get(args.account!);
+    let koinToWithdraw: u64 = 0;
+    if (collectPreferences.percentage_koin) {
+      koinToWithdraw = multiplyAndDivide(
+        balanceKoin,
+        collectPreferences.percentage_koin,
+        ONE_HUNDRED_PERCENT
+      );
+    } else if (collectPreferences.all_after_virtual) {
+      const userVirtual = multiplyAndDivide(
+        userStake.value,
+        poolState.virtual,
+        poolState.stake
+      );
+      if (userVirtual > collectPreferences.all_after_virtual) {
+        koinToWithdraw = userVirtual - collectPreferences.all_after_virtual;
+        if (koinToWithdraw > balanceKoin) {
+          koinToWithdraw = balanceKoin;
+        }
+      }
+    }
+
+    // TODO: continue here
 
     System.require(balanceVapor > 0, "no vapor available to be collected");
     snapshotUserStake.vapor_withdrawn += balanceVapor;
