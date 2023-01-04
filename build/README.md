@@ -1,3 +1,34 @@
+## [Fogata v0.4.3](https://github.com/joticajulian/fogata/releases/tag/v0.4.3) (2023-01-04)
+
+property | value
+--- | ---
+size (mainnet) | 73483 bytes (71.76 kB)
+sha256 (mainnet) | d2cbf1ef72f0219b5bd4d1b002e65ab8a235e088f3f9d166c25b425c93f96757
+size (harbinger) | 73493 bytes (71.77 kB)
+sha256 (harbinger) | 6357f8dbea7872efab0acd35c82a8be15b68a51a2f429ce08a28415367068497
+
+### 🐛 Bug Fixes
+
+- `vapor_withdrawn` was not updated in the pool state when using `collect_vapor`. It is fixed now.
+- A duplicated `System.require` was removed.
+
+## [Fogata v0.4.2](https://github.com/joticajulian/fogata/releases/tag/v0.4.2) (2023-01-04)
+
+property | value
+--- | ---
+size (mainnet) | 73673 bytes (71.95 kB)
+sha256 (mainnet) | 6c65a22b6dd47a2157efe96afe746bd5317d92e49dd8fa5afa219d835c090bf2
+size (harbinger) | 73683 bytes (71.96 kB)
+sha256 (harbinger) | e070f285b16d08ae071a3e7a36652d688e5e7c62b9b97eccbb4d750d602be868
+
+### 🚀 Features
+
+- `set_reserved_koins` was temporarily added to be able to fix a bug in that variable.
+
+### 🐛 Bug Fixes
+
+- fix `pay_beneficiary`: reserved koins was only updated for Sponsors and not the rest of beneficiaries. Now it is applied to all cases.
+
 ## [Fogata v0.4.1](https://github.com/joticajulian/fogata/releases/tag/v0.4.1) (2023-01-02)
 
 property | value

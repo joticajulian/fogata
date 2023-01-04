@@ -63,6 +63,15 @@
       "read_only": false,
       "read-only": false
     },
+    "set_reserved_koins": {
+      "argument": "common.uint64",
+      "return": "common.boole",
+      "description": "Set reserved koins",
+      "entry_point": 2709311113,
+      "entry-point": "0xa17cce89",
+      "read_only": false,
+      "read-only": false
+    },
     "pay_beneficiary": {
       "argument": "common.address",
       "return": "common.boole",

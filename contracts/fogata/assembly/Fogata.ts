@@ -401,6 +401,21 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
+   * Set reserved koins
+   * @external
+   * TODO: this function was added to fix bugs. It MUST
+   * be removed in production
+   */
+   set_reserved_koins(args: common.uint64): common.boole {
+    System.require(
+      this.only_owner(),
+      "owner has not authorized to update reserved koins"
+    );
+    this.reservedKoins.put(args);
+    return BOOLE_TRUE;
+  }
+
+  /**
    * Get user preferences
    * @external
    * @readonly
@@ -443,7 +458,20 @@ export class Fogata extends ConfigurablePool {
     }
 
     const sponsorsContract = this.getSponsorsContract();
-    if (!Arrays.equal(args.account, sponsorsContract._contractId)) {
+    if (Arrays.equal(args.account, sponsorsContract._contractId)) {
+      // the beneficiary is the sponsors contract. Make the transfer
+      // through the contribute function to receive governance tokens
+      this.allowance.put(
+        new fogata.allowance(
+          fogata.allowance_type.TRANSFER_KOIN,
+          balance.value,
+          sponsorsContract._contractId
+        )
+      );
+      sponsorsContract.contribute(
+        new tokenSponsors.contribute_args(this.contractId, balance.value)
+      );
+    } else {
       // normal transfer
       System.require(
         this.getKoinContract().transfer(
@@ -453,21 +481,8 @@ export class Fogata extends ConfigurablePool {
         ),
         "transfer rejected"
       );
-      return BOOLE_TRUE;
     }
 
-    // the beneficiary is the sponsors contract. Make the transfer
-    // through the contribute function to receive governance tokens
-    this.allowance.put(
-      new fogata.allowance(
-        fogata.allowance_type.TRANSFER_KOIN,
-        balance.value,
-        sponsorsContract._contractId
-      )
-    );
-    sponsorsContract.contribute(
-      new tokenSponsors.contribute_args(this.contractId, balance.value)
-    );
     this.balancesBeneficiaries.remove(args.account!);
 
     // remove this amount from the reserved koins
@@ -527,10 +542,6 @@ export class Fogata extends ConfigurablePool {
       this.getVhpContract().balanceOf(this.contractId);
 
     // check how much this virtual balance has increased
-    System.require(
-      poolVirtual >= lastPoolVirtual,
-      `internal error: current balance (koin + vhp) should be greater than ${poolVirtual}`
-    );
     const deltaPoolVirtual = sub(
       poolVirtual,
       lastPoolVirtual,
@@ -1009,6 +1020,7 @@ export class Fogata extends ConfigurablePool {
     ).value;
     System.require(transferStatus1 == true, "transfer of vapor rejected");
     this.snapshotStakes.put(args.account!, snapshotUserStake);
+    this.poolState.put(poolState);
     return BOOLE_TRUE;
   }
 
