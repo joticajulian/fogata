@@ -519,10 +519,6 @@ export class Fogata extends ConfigurablePool {
       this.getVhpContract().balanceOf(this.contractId);
 
     // check how much this virtual balance has increased
-    System.require(
-      poolVirtual >= lastPoolVirtual,
-      `internal error: current balance (koin + vhp) should be greater than ${poolVirtual}`
-    );
     const deltaPoolVirtual = sub(
       poolVirtual,
       lastPoolVirtual,
