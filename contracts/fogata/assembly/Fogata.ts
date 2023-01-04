@@ -1001,6 +1001,7 @@ export class Fogata extends ConfigurablePool {
     ).value;
     System.require(transferStatus1 == true, "transfer of vapor rejected");
     this.snapshotStakes.put(args.account!, snapshotUserStake);
+    this.poolState.put(poolState);
     return BOOLE_TRUE;
   }
 }
