@@ -1,3 +1,17 @@
+## [Fogata v0.4.3](https://github.com/joticajulian/fogata/releases/tag/v0.4.3) (2023-01-04)
+
+property | value
+--- | ---
+size (mainnet) | 73483 bytes (71.76 kB)
+sha256 (mainnet) | d2cbf1ef72f0219b5bd4d1b002e65ab8a235e088f3f9d166c25b425c93f96757
+size (harbinger) | 73493 bytes (71.77 kB)
+sha256 (harbinger) | 6357f8dbea7872efab0acd35c82a8be15b68a51a2f429ce08a28415367068497
+
+### 🐛 Bug Fixes
+
+- `vapor_withdrawn` was not updated in the pool state when using `collect_vapor`. It is fixed now.
+- A duplicated `System.require` was removed.
+
 ## [Fogata v0.4.2](https://github.com/joticajulian/fogata/releases/tag/v0.4.2) (2023-01-04)
 
 property | value

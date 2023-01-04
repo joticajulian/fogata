@@ -1,6 +1,6 @@
 {
   "name": "fogata",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "license": "MIT",
   "dependencies": {
     "koilib": "^5.2.2",
