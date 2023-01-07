@@ -16,6 +16,10 @@ import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 import { token as tokenSponsors } from "./proto/token";
 import { multiplyAndDivide, sub } from "./utils";
+import {
+  sponsorsContractIdHarbinger,
+  sponsorsContractIdMainnet,
+} from "./constants";
 
 const BOOLE_TRUE = new common.boole(true);
 const BOOLE_FALSE = new common.boole(false);
@@ -335,8 +339,8 @@ export class Fogata extends ConfigurablePool {
     return new Sponsors(
       Base58.decode(
         BUILD_FOR_TESTING
-          ? "1AuJQxqqyBZXqqugTQZzXRVRmEYJtsMYQ8"
-          : "1KTasVrqvMBofMANKMCT3HMya16sfZPLFB"
+          ? sponsorsContractIdHarbinger
+          : sponsorsContractIdMainnet
       )
     );
   }

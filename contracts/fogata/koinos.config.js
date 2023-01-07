@@ -33,12 +33,15 @@ module.exports = {
         },
         contract: {
           privateKey: process.env.HARBINGER_FOGATA_CONTRACT_PRIVATE_KEY,
+          id: process.env.HARBINGER_FOGATA_CONTRACT_ID,
+          name: process.env.HARBINGER_FOGATA_CONTRACT_NAME,
+          image: process.env.HARBINGER_FOGATA_CONTRACT_IMAGE,
+          paymentPeriod: process.env.HARBINGER_FOGATA_CONTRACT_PAYMENT_PERIOD,
+          description: process.env.HARBINGER_FOGATA_CONTRACT_DESCRIPTION,
+          beneficiaries: process.env.HARBINGER_FOGATA_CONTRACT_BENEFICIARIES,
         },
         contractOwner: {
           privateKey: process.env.HARBINGER_FOGATA_OWNER_PRIVATE_KEY,
-        },
-        sponsors: {
-          privateKey: process.env.HARBINGER_SPONSORS_CONTRACT_PRIVATE_KEY,
         },
       },
     },
@@ -50,12 +53,15 @@ module.exports = {
         },
         contract: {
           privateKey: process.env.MAINNET_FOGATA_CONTRACT_PRIVATE_KEY,
+          id: process.env.MAINNET_FOGATA_CONTRACT_ID,
+          name: process.env.MAINNET_FOGATA_CONTRACT_NAME,
+          image: process.env.MAINNET_FOGATA_CONTRACT_IMAGE,
+          paymentPeriod: process.env.MAINNET_FOGATA_CONTRACT_PAYMENT_PERIOD,
+          description: process.env.MAINNET_FOGATA_CONTRACT_DESCRIPTION,
+          beneficiaries: process.env.MAINNET_FOGATA_CONTRACT_BENEFICIARIES,
         },
         contractOwner: {
           privateKey: process.env.MAINNET_FOGATA_OWNER_PRIVATE_KEY,
-        },
-        sponsors: {
-          privateKey: process.env.MAINNET_SPONSORS_CONTRACT_PRIVATE_KEY,
         },
       },
     },
