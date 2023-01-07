@@ -47,7 +47,10 @@ export class Fogata extends ConfigurablePool {
 
   // collect preferences for users
 
-  collectPreferences: Storage.Map<Uint8Array, fogata.collect_preferences>;
+  collectKoinPreferences: Storage.Map<
+    Uint8Array,
+    fogata.collect_koin_preferences
+  >;
 
   constructor() {
     super();
@@ -90,6 +93,14 @@ export class Fogata extends ConfigurablePool {
       fogata.allowance.decode,
       fogata.allowance.encode,
       () => new fogata.allowance()
+    );
+
+    this.collectKoinPreferences = new Storage.Map(
+      this.contractId,
+      6,
+      fogata.collect_koin_preferences.decode,
+      fogata.collect_koin_preferences.encode,
+      () => new fogata.collect_koin_preferences()
     );
   }
 
@@ -406,7 +417,7 @@ export class Fogata extends ConfigurablePool {
    * TODO: this function was added to fix bugs. It MUST
    * be removed in production
    */
-   set_reserved_koins(args: common.uint64): common.boole {
+  set_reserved_koins(args: common.uint64): common.boole {
     System.require(
       this.only_owner(),
       "owner has not authorized to update reserved koins"
@@ -420,17 +431,25 @@ export class Fogata extends ConfigurablePool {
    * @external
    * @readonly
    */
-  get_collect_preferences(args: common.address): fogata.collect_preferences {
-    return this.collectPreferences.get(args.account!)!;
+  get_collect_koin_preferences(
+    args: common.address
+  ): fogata.collect_koin_preferences {
+    return this.collectKoinPreferences.get(args.account!)!;
   }
 
   /**
    * Set user preferences
    * @external
    */
-  set_collect_preferences(args: fogata.collect_preferences): common.boole {
+  set_collect_koin_preferences(
+    args: fogata.collect_koin_preferences
+  ): common.boole {
     this.validateAuthority(args.account!);
-    this.collectPreferences.put(args.account!, args);
+    System.require(
+      !args.percentage_koin || args.percentage_koin <= ONE_HUNDRED_PERCENT,
+      "the percentage exceeds 100%"
+    );
+    this.collectKoinPreferences.put(args.account!, args);
     return BOOLE_TRUE;
   }
 
@@ -691,9 +710,9 @@ export class Fogata extends ConfigurablePool {
       // reset counters modified in the previous snapshot
       snapshotUserStake.koin_withdrawn = 0;
       snapshotUserStake.vapor_withdrawn = 0;
-    }
-    if (!readonly) {
-      this.snapshotStakes.put(account, snapshotUserStake);
+      if (!readonly) {
+        this.snapshotStakes.put(account, snapshotUserStake);
+      }
     }
     return snapshotUserStake;
   }
@@ -867,52 +886,31 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Withdraw koin or vhp from the pool
-   * @external
-   * @event fogata.unstake fogata.stake_event
+   * Internal function to unstake
    */
-  unstake(args: fogata.stake_args): common.boole {
-    this.require_unpaused();
-    System.require(
-      args.koin_amount > 0 || args.vhp_amount > 0,
-      "either koin amount or vhp amount must be greater than 0"
-    );
-
-    this.validateAuthority(args.account!);
+  _unstake(args: fogata.stake_args, collect: boolean = false): common.boole {
+    if (!collect) {
+      this.validateAuthority(args.account!);
+    }
 
     // get pool state, user stake, and virtual amount to withdraw
     const poolState = this.poolState.get()!;
     const userStake = this.stakes.get(args.account!)!;
-    const deltaUserVirtual = args.koin_amount + args.vhp_amount;
 
     // distribute pending payments and update the virtual balance
     // before making the transfer
     poolState.virtual = this.refreshBalances(poolState.virtual);
-
-    System.require(poolState.stake > 0, "there is no stake in the pool");
 
     // calculate virtual amount of the user
     //
     // note: same maths applied as in the stake function. Check there
     // for more details
     // userVirtual = (userStake * poolVirtual_old) / poolStake_old;
+    System.require(poolState.stake > 0, "there is no stake in the pool");
     const userVirtual = multiplyAndDivide(
       userStake.value,
       poolState.virtual,
       poolState.stake
-    );
-
-    System.require(
-      userVirtual >= deltaUserVirtual,
-      "insufficient virtual balance"
-    );
-
-    // deltaUserStake = (delta_userVirtual * poolStake_old) / poolVirtual_old
-    const deltaUserStake = multiplyAndDivide(
-      deltaUserVirtual,
-      poolState.stake,
-      poolState.virtual
-      // division by 0 ? no because userVirtual > 0, then poolState.virtual > 0
     );
 
     // apply updates in the snapshot before updating the stake
@@ -929,32 +927,100 @@ export class Fogata extends ConfigurablePool {
     );
     const balanceVhp = sub(userVirtual, balanceKoin, "unstake 1");
 
-    if (args.koin_amount > 0) {
+    let koin_amount: u64 = 0;
+    let vhp_amount: u64 = 0;
+
+    if (collect) {
+      // calculation based on collect koin preferences
+      const collectKoinPreferences = this.collectKoinPreferences.get(
+        args.account!
+      )!;
+
+      if (collectKoinPreferences.percentage_koin) {
+        // calculation based on the available koin at the time
+        // of the snapshot
+        const balanceKoinAtSnapshot =
+          balanceKoin + snapshotUserStake.koin_withdrawn;
+        koin_amount = multiplyAndDivide(
+          balanceKoinAtSnapshot,
+          collectKoinPreferences.percentage_koin,
+          ONE_HUNDRED_PERCENT
+        );
+      } else if (collectKoinPreferences.all_after_virtual) {
+        // the desired amount is everything that exceeds a specific threshold
+        if (userVirtual > collectKoinPreferences.all_after_virtual) {
+          koin_amount = userVirtual - collectKoinPreferences.all_after_virtual;
+        }
+      }
+
+      // remove the koin already withdrawn in the current period
+      if (koin_amount > snapshotUserStake.koin_withdrawn) {
+        koin_amount -= snapshotUserStake.koin_withdrawn;
+      } else {
+        koin_amount = 0;
+      }
+
+      // limit the result to the current balance
+      if (koin_amount > balanceKoin) {
+        koin_amount = balanceKoin;
+      }
+
+      if (koin_amount == 0) {
+        System.log("no koins to collect");
+        // finish the work of refreshBalances
+        this.poolState.put(poolState);
+        return BOOLE_FALSE;
+      }
+    } else {
+      // not "collect" function. Amounts taken from the arguments
+      koin_amount = args.koin_amount;
+      vhp_amount = args.vhp_amount;
       System.require(
-        args.koin_amount <= balanceKoin,
-        `you can withdraw max ${balanceKoin} satoshis of koin for this period. Requested ${args.koin_amount}`
+        koin_amount > 0 || vhp_amount > 0,
+        "either koin amount or vhp amount must be greater than 0"
       );
-      snapshotUserStake.koin_withdrawn += args.koin_amount;
-      poolState.koin_withdrawn += args.koin_amount;
+    }
+    const deltaUserVirtual = koin_amount + vhp_amount;
+
+    System.require(
+      userVirtual >= deltaUserVirtual,
+      "insufficient virtual balance"
+    );
+
+    // deltaUserStake = (delta_userVirtual * poolStake_old) / poolVirtual_old
+    const deltaUserStake = multiplyAndDivide(
+      deltaUserVirtual,
+      poolState.stake,
+      poolState.virtual
+      // division by 0 ? no because userVirtual > 0, then poolState.virtual > 0
+    );
+
+    if (koin_amount > 0) {
+      System.require(
+        koin_amount <= balanceKoin,
+        `you can withdraw max ${balanceKoin} satoshis of koin for this period. Requested ${koin_amount}`
+      );
+      snapshotUserStake.koin_withdrawn += koin_amount;
+      poolState.koin_withdrawn += koin_amount;
 
       const transferStatus1 = this.getKoinContract().transfer(
         this.contractId,
         args.account!,
-        args.koin_amount
+        koin_amount
       );
       System.require(transferStatus1 == true, "transfer of koins rejected");
       this.snapshotStakes.put(args.account!, snapshotUserStake);
     }
 
-    if (args.vhp_amount > 0) {
+    if (vhp_amount > 0) {
       System.require(
-        args.vhp_amount <= balanceVhp,
-        `you can withdraw max ${balanceVhp} satoshis of vhp. Requested ${args.vhp_amount}`
+        vhp_amount <= balanceVhp,
+        `you can withdraw max ${balanceVhp} satoshis of vhp. Requested ${vhp_amount}`
       );
       const transferStatus2 = this.getVhpContract().transfer(
         this.contractId,
         args.account!,
-        args.vhp_amount
+        vhp_amount
       );
       System.require(transferStatus2 == true, "transfer of vhp rejected");
     }
@@ -973,8 +1039,8 @@ export class Fogata extends ConfigurablePool {
       Protobuf.encode(
         new fogata.stake_event(
           args.account!,
-          args.koin_amount,
-          args.vhp_amount,
+          koin_amount,
+          vhp_amount,
           deltaUserStake
         ),
         fogata.stake_event.encode
@@ -985,7 +1051,17 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Withdraw earnings of vapor. Anyone can call this
+   * Withdraw koin or vhp from the pool
+   * @external
+   * @event fogata.unstake fogata.stake_event
+   */
+  unstake(args: fogata.stake_args): common.boole {
+    this.require_unpaused();
+    return this._unstake(args);
+  }
+
+  /**
+   * DEPRECATED. Withdraw earnings of vapor. Anyone can call this
    * method
    * @external
    */
@@ -1025,71 +1101,52 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Withdraw earnings of vapor and koin. Anyone can call this
+   * Withdraw earnings of koin and vapor. Anyone can call this
    * method
    * @external
    */
   collect(args: common.address): common.boole {
     this.require_unpaused();
-    // get pool state, user stake, and virtual amount to withdraw
-    const poolState = this.poolState.get()!;
-    const userStake = this.stakes.get(args.account!)!;
 
-    const snapshotUserStake = this.updateSnapshotUser(
-      args.account!,
-      poolState,
-      userStake
+    // call unstake for collect koin
+    const unstakeResult = this._unstake(
+      new fogata.stake_args(args.account, 0, 0),
+      true
     );
 
+    // get snapshot.
+    // No need to call this.updateSnapshotUser because it was
+    // updated in this._unstake
+    const snapshotUserStake = this.snapshotStakes.get(args.account!)!;
+
+    // calc vapor balance
+    const poolState = this.poolState.get()!;
     const balanceVapor = this.getBalanceToken(
       snapshotUserStake,
       poolState,
       "vapor"
     );
 
-    const balanceKoin = this.getBalanceToken(
-      snapshotUserStake,
-      poolState,
-      "koin"
+    System.require(
+      balanceVapor > 0 || unstakeResult.value == true,
+      "no koin or vapor available to be collected"
     );
 
-    const collectPreferences = this.collectPreferences.get(args.account!);
-    let koinToWithdraw: u64 = 0;
-    if (collectPreferences.percentage_koin) {
-      koinToWithdraw = multiplyAndDivide(
-        balanceKoin,
-        collectPreferences.percentage_koin,
-        ONE_HUNDRED_PERCENT
-      );
-    } else if (collectPreferences.all_after_virtual) {
-      const userVirtual = multiplyAndDivide(
-        userStake.value,
-        poolState.virtual,
-        poolState.stake
-      );
-      if (userVirtual > collectPreferences.all_after_virtual) {
-        koinToWithdraw = userVirtual - collectPreferences.all_after_virtual;
-        if (koinToWithdraw > balanceKoin) {
-          koinToWithdraw = balanceKoin;
-        }
-      }
+    if (balanceVapor > 0) {
+      snapshotUserStake.vapor_withdrawn += balanceVapor;
+      poolState.vapor_withdrawn += balanceVapor;
+
+      const transferStatus1 = this.getSponsorsContract().transfer(
+        new tokenSponsors.transfer_args(
+          this.contractId,
+          args.account!,
+          balanceVapor
+        )
+      ).value;
+      System.require(transferStatus1 == true, "transfer of vapor rejected");
+      this.snapshotStakes.put(args.account!, snapshotUserStake);
     }
 
-    // TODO: continue here
-
-    System.require(balanceVapor > 0, "no vapor available to be collected");
-    snapshotUserStake.vapor_withdrawn += balanceVapor;
-    poolState.vapor_withdrawn += balanceVapor;
-
-    const transferStatus1 = this.getSponsorsContract().transfer(
-      new tokenSponsors.transfer_args(
-        this.contractId,
-        args.account!,
-        balanceVapor
-      )
-    ).value;
-    System.require(transferStatus1 == true, "transfer of vapor rejected");
-    this.snapshotStakes.put(args.account!, snapshotUserStake);
     return BOOLE_TRUE;
   }
 }

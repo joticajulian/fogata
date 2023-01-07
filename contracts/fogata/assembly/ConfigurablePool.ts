@@ -36,8 +36,8 @@ export class ConfigurablePool extends ManaDelegable {
     for (let i = 0; i < args.beneficiaries.length; i += 1) {
       totalPercentage += args.beneficiaries[i].percentage;
       System.require(
-        args.beneficiaries[i].percentage < ONE_HUNDRED_PERCENT &&
-          totalPercentage < ONE_HUNDRED_PERCENT,
+        args.beneficiaries[i].percentage <= ONE_HUNDRED_PERCENT &&
+          totalPercentage <= ONE_HUNDRED_PERCENT,
         "the percentages for beneficiaries exceeded 100%"
       );
       System.require(

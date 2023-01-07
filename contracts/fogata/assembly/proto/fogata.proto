@@ -35,6 +35,14 @@ message koin_account {
    uint64 koin_amount = 2 [jstype = JS_STRING];
 }
 
+message collect_koin_preferences {
+   bytes account = 1 [(koinos.btype) = ADDRESS];
+   oneof preference {
+      uint64 percentage_koin = 2; // percentage with 3 decimals (1000 => 1%)
+      uint64 all_after_virtual = 3;
+   }
+}
+
 enum allowance_type {
    UNDEFINED = 0;
    TRANSFER_KOIN = 1;
