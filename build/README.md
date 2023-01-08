@@ -1,3 +1,22 @@
+## [Fogata v0.5.0](https://github.com/joticajulian/fogata/releases/tag/v0.5.0) (2023-01-08)
+
+property | value
+--- | ---
+size (mainnet) | 76161 bytes (74.38 kB)
+sha256 (mainnet) | 335d1c9b230b8f56b6ddb97958a69c04b8ccf30e6038fc5c0ec754e9dff4f33e
+size (harbinger) | 76171 bytes (74.39 kB)
+sha256 (harbinger) | f55133084e32aae8a6a86e8616946db56bfce503210fba132c3dc0c7b83e7a11
+
+### 🚀 Features
+
+- definition of collect koin preferences to be used for automatic transfers
+- `collect_vapor` will be deprecated in the future. Use `collect` instead which is for koin and vapor
+- new script to updateContract
+
+### 🐛 Bug Fixes
+
+- fix validation of pool params
+
 ## [Fogata v0.4.3](https://github.com/joticajulian/fogata/releases/tag/v0.4.3) (2023-01-04)
 
 property | value
