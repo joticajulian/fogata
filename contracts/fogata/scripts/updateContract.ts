@@ -32,6 +32,11 @@ async function main() {
       : "../build/release/fogata.wasm"
   );
 
+  if (!network.accounts.contract.id)
+    throw new Error(
+      "the contract id of the pool is not defined in the env variables"
+    );
+
   const contract = new Contract({
     id: network.accounts.contract.id,
     abi,

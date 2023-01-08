@@ -37,10 +37,8 @@ message koin_account {
 
 message collect_koin_preferences {
    bytes account = 1 [(koinos.btype) = ADDRESS];
-   oneof preference {
-      uint64 percentage_koin = 2; // percentage with 3 decimals (1000 => 1%)
-      uint64 all_after_virtual = 3;
-   }
+   uint64 percentage_koin = 2; // percentage with 3 decimals (1000 => 1%)
+   uint64 all_after_virtual = 3;
 }
 
 enum allowance_type {

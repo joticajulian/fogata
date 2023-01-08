@@ -450,6 +450,10 @@ export class Fogata extends ConfigurablePool {
   ): common.boole {
     this.validateAuthority(args.account!);
     System.require(
+      !args.percentage_koin || !args.all_after_virtual,
+      "either percentage_koin or all_after_virtual must be 0"
+    );
+    System.require(
       !args.percentage_koin || args.percentage_koin <= ONE_HUNDRED_PERCENT,
       "the percentage exceeds 100%"
     );
