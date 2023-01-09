@@ -24,6 +24,24 @@ import {
 const BOOLE_TRUE = new common.boole(true);
 const BOOLE_FALSE = new common.boole(false);
 
+class ResultUnstake {
+  poolState: fogata.pool_state;
+
+  userStake: common.uint64;
+
+  result: bool;
+
+  constructor(
+    poolState: fogata.pool_state,
+    userStake: common.uint64,
+    result: bool
+  ) {
+    this.poolState = poolState;
+    this.userStake = userStake;
+    this.result = result;
+  }
+}
+
 export class Fogata extends ConfigurablePool {
   callArgs: System.getArgumentsReturn | null;
 
@@ -38,6 +56,8 @@ export class Fogata extends ConfigurablePool {
   stakes: Storage.Map<Uint8Array, common.uint64>;
 
   snapshotStakes: Storage.Map<Uint8Array, fogata.snapshot_stake>;
+
+  vaporWithdrawn: Storage.Map<Uint8Array, common.uint64>;
 
   // Balances beneficiaries and mana supporters
 
@@ -105,6 +125,14 @@ export class Fogata extends ConfigurablePool {
       fogata.collect_koin_preferences.decode,
       fogata.collect_koin_preferences.encode,
       () => new fogata.collect_koin_preferences()
+    );
+
+    this.vaporWithdrawn = new Storage.Map(
+      this.contractId,
+      7,
+      common.uint64.decode,
+      common.uint64.encode,
+      () => new common.uint64(0)
     );
   }
 
@@ -407,7 +435,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    * @readonly
    */
-   get_pool_state_no_updated(): fogata.pool_state {
+  get_pool_state_no_updated(): fogata.pool_state {
     return this.poolState.get()!;
   }
 
@@ -668,35 +696,18 @@ export class Fogata extends ConfigurablePool {
       );
     }
 
-    // ideally all vapor should be withdrawn
-    const vaporNotWithdrawn = sub(
-      poolState.snapshot_vapor,
-      poolState.vapor_withdrawn,
+    // update virtual vapor and vapor
+    poolState.virtual_vapor += sub(
+      vaporBalance,
+      poolState.vapor,
       "reburn_and_snapshot 3"
     );
-    if (vaporNotWithdrawn > 0) {
-      // this vapor was not withdrawn. The affected accounts will lose the rights
-      // over them, and this vapor will be part to the whole community in the next period
+    poolState.vapor = vaporBalance;
 
-      // make sure the current balance is correct
-      sub(vaporBalance, vaporNotWithdrawn, "reburn_and_snapshot 4");
-
-      System.event(
-        "fogata.vapor_not_withdrawn",
-        Protobuf.encode(
-          new common.uint64(vaporNotWithdrawn),
-          common.uint64.encode
-        ),
-        []
-      );
-    }
-
-    // take snapshot: reset koinWithdrawn counter, vaporWithdrawn counter,
-    // take pool state, and set time for the next snapshot
+    // take snapshot: reset koinWithdrawn counter, take pool state,
+    // and set time for the next snapshot
     poolState.koin_withdrawn = 0;
-    poolState.vapor_withdrawn = 0;
     poolState.snapshot_koin = koinBalance;
-    poolState.snapshot_vapor = vaporBalance;
     poolState.snapshot_stake = poolState.stake;
     if (poolState.next_snapshot + poolParams.payment_period <= now) {
       poolState.current_snapshot = now;
@@ -728,49 +739,11 @@ export class Fogata extends ConfigurablePool {
       snapshotUserStake.stake = userStake.value;
       // reset counters modified in the previous snapshot
       snapshotUserStake.koin_withdrawn = 0;
-      snapshotUserStake.vapor_withdrawn = 0;
       if (!readonly) {
         this.snapshotStakes.put(account, snapshotUserStake);
       }
     }
     return snapshotUserStake;
-  }
-
-  /**
-   * Function to get the balance of KOIN or VAPOR of an
-   * specific account. This balance is calculated from the
-   * current snapshot.
-   */
-  getBalanceToken(
-    snapshotUserStake: fogata.snapshot_stake,
-    poolState: fogata.pool_state,
-    token: string
-  ): u64 {
-    System.require(
-      token == "koin" || token == "vapor",
-      `internal error: invalid token ${token}`
-    );
-
-    if (poolState.snapshot_stake == 0) return 0;
-
-    const snapshotToken =
-      token == "koin" ? poolState.snapshot_koin : poolState.snapshot_vapor;
-    const amountWithdrawn =
-      token == "koin"
-        ? snapshotUserStake.koin_withdrawn
-        : snapshotUserStake.vapor_withdrawn;
-
-    let amountSnapshot = multiplyAndDivide(
-      snapshotUserStake.stake,
-      snapshotToken,
-      poolState.snapshot_stake
-    );
-    amountSnapshot = sub(
-      amountSnapshot,
-      amountWithdrawn,
-      `getBalanceToken ${token}`
-    );
-    return amountSnapshot;
   }
 
   /**
@@ -795,17 +768,32 @@ export class Fogata extends ConfigurablePool {
       true
     );
 
-    const balanceKoin = this.getBalanceToken(
-      snapshotUserStake,
-      poolState,
-      "koin"
-    );
-    const balanceVapor = this.getBalanceToken(
-      snapshotUserStake,
-      poolState,
-      "vapor"
-    );
+    let balanceKoin: u64 = 0;
+    if (poolState.snapshot_stake > 0) {
+      balanceKoin = multiplyAndDivide(
+        snapshotUserStake.stake,
+        poolState.snapshot_koin,
+        poolState.snapshot_stake
+      );
+      balanceKoin = sub(
+        balanceKoin,
+        snapshotUserStake.koin_withdrawn,
+        "balance_of 1"
+      );
+    }
     const balanceVhp = sub(userVirtual, balanceKoin, "balance_of 1");
+
+    let balanceVapor: u64 = 0;
+    if (poolState.stake > 0) {
+      balanceVapor = multiplyAndDivide(
+        userStake.value,
+        poolState.virtual_vapor,
+        poolState.stake
+      );
+      const vaporWithdrawn = this.vaporWithdrawn.get(args.account!)!;
+      balanceVapor = sub(balanceVapor, vaporWithdrawn.value, "balance_of 2");
+    }
+
     return new fogata.balance(balanceKoin, balanceVhp, balanceVapor);
   }
 
@@ -850,11 +838,15 @@ export class Fogata extends ConfigurablePool {
       "the transfer of tokens was rejected"
     );
 
-    // calculate stake of the user
+    // calculate stake of the user and vapor
     let deltaUserStake: u64;
+    let deltaUserVapor: u64;
     if (poolState.stake == 0) {
       // this is the first stake in the pool
       deltaUserStake = deltaUserVirtual;
+
+      // no vapor is computed
+      deltaUserVapor = 0;
     } else {
       // the user is adding stake and virtual balance to the pool. The
       // following relation must be preserved to not affect previous users:
@@ -865,7 +857,7 @@ export class Fogata extends ConfigurablePool {
       // poolStake_new = poolStake_old + delta_userStake
       // poolVirtual_new = poolVirtual_old + delta_userVirtual
       //
-      // after some math the new stake for the user is calculated as:
+      // after some maths the new stake for the user is calculated as:
       // delta_userStake = delta_userVirtual * poolStake_old / poolVirtual_old
       deltaUserStake = multiplyAndDivide(
         deltaUserVirtual,
@@ -874,13 +866,31 @@ export class Fogata extends ConfigurablePool {
         // division by 0 ? no because poolState.stake > 0, then
         // poolState.virtual should be greater than 0 as well
       );
+
+      // the user is adding stake, then the following relation must be
+      // preserved to not affect previous users when calculating vapor:
+      //
+      // poolStake_new / virtualVapor_new = poolStake_old / virtualVapor_old
+      //
+      // where:
+      // poolStake_new = poolStake_old + delta_userStake
+      // virtualVapor_new = virtualVapor_old + delta_userVapor
+      //
+      // after some maths the new vapor for the user is calculated as:
+      // delta_userVapor = delta_userStake * virtualVapor_old / poolStake_old
+      deltaUserVapor = multiplyAndDivide(
+        deltaUserStake,
+        poolState.virtual_vapor,
+        poolState.stake
+        // division by 0 ? no because poolState.stake > 0
+      );
     }
 
     // apply updates in the snapshot before updating the stake
     this.updateSnapshotUser(args.account!, poolState, userStake);
 
     // update count
-    if(userStake.value == 0) {
+    if (userStake.value == 0) {
       poolState.user_count += 1;
     }
 
@@ -891,7 +901,14 @@ export class Fogata extends ConfigurablePool {
     // update pool state
     poolState.stake += deltaUserStake;
     poolState.virtual += deltaUserVirtual;
+    poolState.virtual_vapor += deltaUserVapor;
     this.poolState.put(poolState);
+
+    // as new vapor is virtually created for the user, it is also computed
+    // that this vapor was withdrawn by the user to have a zero sum result
+    const vaporWithdrawn = this.vaporWithdrawn.get(args.account!)!;
+    vaporWithdrawn.value += deltaUserVapor;
+    this.vaporWithdrawn.put(args.account!, vaporWithdrawn);
 
     System.event(
       "fogata.stake",
@@ -912,7 +929,7 @@ export class Fogata extends ConfigurablePool {
   /**
    * Internal function to unstake
    */
-  _unstake(args: fogata.stake_args, collect: boolean = false): common.boole {
+  _unstake(args: fogata.stake_args, collect: boolean = false): ResultUnstake {
     if (!collect) {
       this.validateAuthority(args.account!);
     }
@@ -944,11 +961,19 @@ export class Fogata extends ConfigurablePool {
       userStake
     );
 
-    const balanceKoin = this.getBalanceToken(
-      snapshotUserStake,
-      poolState,
-      "koin"
-    );
+    let balanceKoin: u64 = 0;
+    if (poolState.snapshot_stake > 0) {
+      balanceKoin = multiplyAndDivide(
+        snapshotUserStake.stake,
+        poolState.snapshot_koin,
+        poolState.snapshot_stake
+      );
+      balanceKoin = sub(
+        balanceKoin,
+        snapshotUserStake.koin_withdrawn,
+        "balance_of 1"
+      );
+    }
     const balanceVhp = sub(userVirtual, balanceKoin, "unstake 1");
 
     let koin_amount: u64 = 0;
@@ -993,7 +1018,7 @@ export class Fogata extends ConfigurablePool {
         System.log("no koins to collect");
         // finish the work of refreshBalances
         this.poolState.put(poolState);
-        return BOOLE_FALSE;
+        return new ResultUnstake(poolState, userStake, false);
       }
     } else {
       // not "collect" function. Amounts taken from the arguments
@@ -1017,6 +1042,18 @@ export class Fogata extends ConfigurablePool {
       poolState.stake,
       poolState.virtual
       // division by 0 ? no because userVirtual > 0, then poolState.virtual > 0
+    );
+
+    // calculate virtual vapor of the user
+    //
+    // note: same maths applied as in the stake function. Check there
+    // for more details
+    // deltaUserVapor = (deltaUserStake * virtualVapor_old) / poolStake_old;
+    const deltaUserVapor = multiplyAndDivide(
+      deltaUserStake,
+      poolState.virtual_vapor,
+      poolState.stake
+      // division by 0 ? no because poolState.stake > 0
     );
 
     if (koin_amount > 0) {
@@ -1054,14 +1091,29 @@ export class Fogata extends ConfigurablePool {
     this.stakes.put(args.account!, userStake);
 
     // update count
-    if(userStake.value == 0) {
+    if (userStake.value == 0) {
       poolState.user_count -= 1;
     }
 
     // update pool state
     poolState.stake = sub(poolState.stake, deltaUserStake, "unstake 3");
     poolState.virtual = sub(poolState.virtual, deltaUserVirtual, "unstake 4");
+    poolState.virtual_vapor = sub(
+      poolState.virtual_vapor,
+      deltaUserVapor,
+      "unstake 5"
+    );
     this.poolState.put(poolState);
+
+    // as some vapor is virtually removed from the user, it is also removed from
+    // the withdrawn vapor of the user to have a zero sum result
+    const vaporWithdrawn = this.vaporWithdrawn.get(args.account!)!;
+    vaporWithdrawn.value = sub(
+      vaporWithdrawn.value,
+      deltaUserVapor,
+      "unstake 6"
+    );
+    this.vaporWithdrawn.put(args.account!, vaporWithdrawn);
 
     System.event(
       "fogata.unstake",
@@ -1076,7 +1128,7 @@ export class Fogata extends ConfigurablePool {
       ),
       [args.account!]
     );
-    return BOOLE_TRUE;
+    return new ResultUnstake(poolState, userStake, true);
   }
 
   /**
@@ -1086,47 +1138,8 @@ export class Fogata extends ConfigurablePool {
    */
   unstake(args: fogata.stake_args): common.boole {
     this.require_unpaused();
-    return this._unstake(args);
-  }
-
-  /**
-   * DEPRECATED. Withdraw earnings of vapor. Anyone can call this
-   * method
-   * @external
-   */
-  collect_vapor(args: common.address): common.boole {
-    this.require_unpaused();
-    // get pool state, user stake, and virtual amount to withdraw
-    const poolState = this.poolState.get()!;
-    const userStake = this.stakes.get(args.account!)!;
-
-    const snapshotUserStake = this.updateSnapshotUser(
-      args.account!,
-      poolState,
-      userStake
-    );
-
-    const balanceVapor = this.getBalanceToken(
-      snapshotUserStake,
-      poolState,
-      "vapor"
-    );
-
-    System.require(balanceVapor > 0, "no vapor available to be collected");
-    snapshotUserStake.vapor_withdrawn += balanceVapor;
-    poolState.vapor_withdrawn += balanceVapor;
-
-    const transferStatus1 = this.getSponsorsContract().transfer(
-      new tokenSponsors.transfer_args(
-        this.contractId,
-        args.account!,
-        balanceVapor
-      )
-    ).value;
-    System.require(transferStatus1 == true, "transfer of vapor rejected");
-    this.snapshotStakes.put(args.account!, snapshotUserStake);
-    this.poolState.put(poolState);
-    return BOOLE_TRUE;
+    const resultUnstake = this._unstake(args);
+    return new common.boole(resultUnstake.result);
   }
 
   /**
@@ -1142,29 +1155,28 @@ export class Fogata extends ConfigurablePool {
       new fogata.stake_args(args.account, 0, 0),
       true
     );
-
-    // get snapshot.
-    // No need to call this.updateSnapshotUser because it was
-    // updated in this._unstake
-    const snapshotUserStake = this.snapshotStakes.get(args.account!)!;
+    const poolState = unstakeResult.poolState;
+    const userStake = unstakeResult.userStake;
 
     // calc vapor balance
-    const poolState = this.poolState.get()!;
-    const balanceVapor = this.getBalanceToken(
-      snapshotUserStake,
-      poolState,
-      "vapor"
-    );
+    let balanceVapor: u64 = 0;
+    let vaporWithdrawn = new common.uint64(0);
+    if (poolState.stake > 0) {
+      balanceVapor = multiplyAndDivide(
+        userStake.value,
+        poolState.virtual_vapor,
+        poolState.stake
+      );
+      vaporWithdrawn = this.vaporWithdrawn.get(args.account!)!;
+      balanceVapor = sub(balanceVapor, vaporWithdrawn.value, "collect 1");
+    }
 
     System.require(
-      balanceVapor > 0 || unstakeResult.value == true,
+      balanceVapor > 0 || unstakeResult.result == true,
       "no koin or vapor available to be collected"
     );
 
     if (balanceVapor > 0) {
-      snapshotUserStake.vapor_withdrawn += balanceVapor;
-      poolState.vapor_withdrawn += balanceVapor;
-
       const transferStatus1 = this.getSponsorsContract().transfer(
         new tokenSponsors.transfer_args(
           this.contractId,
@@ -1173,7 +1185,11 @@ export class Fogata extends ConfigurablePool {
         )
       ).value;
       System.require(transferStatus1 == true, "transfer of vapor rejected");
-      this.snapshotStakes.put(args.account!, snapshotUserStake);
+      vaporWithdrawn.value += balanceVapor;
+      this.vaporWithdrawn.put(args.account!, vaporWithdrawn);
+      // update vapor balance
+      poolState.vapor = sub(poolState.vapor, balanceVapor, "collect 2");
+      this.poolState.put(poolState);
     }
 
     return BOOLE_TRUE;

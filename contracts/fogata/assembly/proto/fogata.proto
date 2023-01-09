@@ -67,14 +67,35 @@ message pool_params {
 }
 
 message pool_state {
+   // total stake of the pool
    uint64 stake = 1 [jstype = JS_STRING];
-   uint64 virtual = 2 [jstype = JS_STRING]; // total virtual balance (koin + vhp)
+
+   // total virtual balance (koin + vhp) without touching the reserved koins
+   uint64 virtual = 2 [jstype = JS_STRING];
+
+   // snapshots taken on each period
    uint64 snapshot_stake = 3 [jstype = JS_STRING];
    uint64 snapshot_koin = 4 [jstype = JS_STRING];
+   uint64 snapshot_vapor = 8 [jstype = JS_STRING]; // deprecated
+
+   // snapshot times
    uint64 current_snapshot = 5 [jstype = JS_STRING];
    uint64 next_snapshot = 6 [jstype = JS_STRING];
+
+   // tokens withdrawn in the period
    uint64 koin_withdrawn = 7 [jstype = JS_STRING];
-   uint64 snapshot_vapor = 8 [jstype = JS_STRING];
-   uint64 vapor_withdrawn = 9 [jstype = JS_STRING];
+   uint64 vapor_withdrawn = 9 [jstype = JS_STRING]; // deprecated
+
+   // number of users in the pool
    uint64 user_count = 10 [jstype = JS_STRING];
+
+   // last computed balance of vapor
+   uint64 vapor = 11 [jstype = JS_STRING];
+
+   // representation of all vapor generated in the pool.
+   // It is called "virtual" because it also increases or decreases when there
+   // are changes in the stakes (new stake represents more virtual vapor, and
+   // unstakes represents reduction of virtual vapor), even if there is no
+   // real vapor involved
+   uint64 virtual_vapor = 12 [jstype = JS_STRING];
 }
