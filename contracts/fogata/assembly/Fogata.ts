@@ -392,11 +392,22 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Get the state of the pool
+   * Get the state of the pool updated
    * @external
    * @readonly
    */
   get_pool_state(): fogata.pool_state {
+    const poolState = this.poolState.get()!;
+    poolState.virtual = this.refreshBalances(poolState.virtual, true);
+    return poolState;
+  }
+
+  /**
+   * Get the state of the pool not updated (use only for debug purposes)
+   * @external
+   * @readonly
+   */
+   get_pool_state_no_updated(): fogata.pool_state {
     return this.poolState.get()!;
   }
 
