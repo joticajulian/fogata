@@ -76,4 +76,5 @@ message pool_state {
    uint64 koin_withdrawn = 7 [jstype = JS_STRING];
    uint64 snapshot_vapor = 8 [jstype = JS_STRING];
    uint64 vapor_withdrawn = 9 [jstype = JS_STRING];
+   uint64 user_count = 10 [jstype = JS_STRING];
 }

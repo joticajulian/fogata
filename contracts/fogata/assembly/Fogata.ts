@@ -605,7 +605,7 @@ export class Fogata extends ConfigurablePool {
       totalFeesCollected += fee;
     }
 
-    if (!readonly) {
+    if (!readonly && totalFeesCollected > 0) {
       // update the reserved koins to not take them into account
       // in the get_available_koins() computation
       reservedKoins.value += totalFeesCollected;
@@ -879,6 +879,11 @@ export class Fogata extends ConfigurablePool {
     // apply updates in the snapshot before updating the stake
     this.updateSnapshotUser(args.account!, poolState, userStake);
 
+    // update count
+    if(userStake.value == 0) {
+      poolState.user_count += 1;
+    }
+
     // add new stake to the user
     userStake.value += deltaUserStake;
     this.stakes.put(args.account!, userStake);
@@ -1047,6 +1052,11 @@ export class Fogata extends ConfigurablePool {
     // remove stake from the user
     userStake.value = sub(userStake.value, deltaUserStake, "unstake 2");
     this.stakes.put(args.account!, userStake);
+
+    // update count
+    if(userStake.value == 0) {
+      poolState.user_count -= 1;
+    }
 
     // update pool state
     poolState.stake = sub(poolState.stake, deltaUserStake, "unstake 3");
