@@ -1085,7 +1085,7 @@ export class Fogata extends ConfigurablePool {
     this.stakes.put(args.account!, userStake);
 
     // update count
-    if (userStake.value == 0) {
+    if (userStake.value == 0 && poolState.user_count > 0) {
       poolState.user_count -= 1;
     }
 
@@ -1102,11 +1102,9 @@ export class Fogata extends ConfigurablePool {
     // as some vapor is virtually removed from the user, it is also removed from
     // the withdrawn vapor of the user to have a zero sum result
     const vaporWithdrawn = this.vaporWithdrawn.get(args.account!)!;
-    vaporWithdrawn.value = sub(
-      vaporWithdrawn.value,
-      deltaUserVapor,
-      "unstake 6"
-    );
+    if (vaporWithdrawn.value > deltaUserVapor)
+      vaporWithdrawn.value -= deltaUserVapor;
+    else vaporWithdrawn.value = 0;
     this.vaporWithdrawn.put(args.account!, vaporWithdrawn);
 
     System.event(
