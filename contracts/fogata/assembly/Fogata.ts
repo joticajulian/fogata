@@ -1186,4 +1186,13 @@ export class Fogata extends ConfigurablePool {
 
     return BOOLE_TRUE;
   }
+
+  /**
+   * DEPRECATED. Collect KOIN and VAPOR
+   * @external
+   */
+  collect_vapor(args: common.address): common.boole {
+    this.require_unpaused();
+    return this.collect(args);
+  }
 }
