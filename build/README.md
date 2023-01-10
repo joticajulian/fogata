@@ -1,3 +1,20 @@
+## [Fogata v0.6.0](https://github.com/joticajulian/fogata/releases/tag/v0.6.0) (2023-01-10)
+
+property | value
+--- | ---
+size (mainnet) | 76235 bytes (74.45 kB)
+sha256 (mainnet) | a146ffc8b6b86ef8ca131edb9cea123ddee659582c6cdea3fb36f231741b88ba
+size (harbinger) | 76245 bytes (74.46 kB)
+sha256 (harbinger) | 1b94fea2aeb1bc07af314c0fb125349d70462e05165f8fab563e17da578fefc1
+
+### 🚀 Features
+
+- new calculation of vapor balance that allows accumulation (in previous versions the vapor was lost if you don't collect it).
+- `get_pool_state` now gives the updated values
+- new function `get_pool_state_no_updated`
+- count number of users
+- improvements to refreshBalance, renamed to getPoolStateUpdated
+
 ## [Fogata v0.5.0](https://github.com/joticajulian/fogata/releases/tag/v0.5.0) (2023-01-08)
 
 property | value
