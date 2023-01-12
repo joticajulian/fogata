@@ -1163,26 +1163,24 @@ export class Fogata extends ConfigurablePool {
       balanceVapor = sub(balanceVapor, vaporWithdrawn.value, "collect 1");
     }
 
-    System.require(
-      balanceVapor > 0 || unstakeResult.result == true,
-      "no koin or vapor available to be collected"
-    );
-
-    if (balanceVapor > 0) {
-      const transferStatus1 = this.getSponsorsContract().transfer(
-        new tokenSponsors.transfer_args(
-          this.contractId,
-          args.account!,
-          balanceVapor
-        )
-      ).value;
-      System.require(transferStatus1 == true, "transfer of vapor rejected");
-      vaporWithdrawn.value += balanceVapor;
-      this.vaporWithdrawn.put(args.account!, vaporWithdrawn);
-      // update vapor balance
-      poolState.vapor = sub(poolState.vapor, balanceVapor, "collect 2");
-      this.poolState.put(poolState);
+    if (balanceVapor == 0) {
+      System.log("no vapor to collect");
+      return BOOLE_FALSE;
     }
+
+    const transferStatus1 = this.getSponsorsContract().transfer(
+      new tokenSponsors.transfer_args(
+        this.contractId,
+        args.account!,
+        balanceVapor
+      )
+    ).value;
+    System.require(transferStatus1 == true, "transfer of vapor rejected");
+    vaporWithdrawn.value += balanceVapor;
+    this.vaporWithdrawn.put(args.account!, vaporWithdrawn);
+    // update vapor balance
+    poolState.vapor = sub(poolState.vapor, balanceVapor, "collect 2");
+    this.poolState.put(poolState);
 
     return BOOLE_TRUE;
   }
