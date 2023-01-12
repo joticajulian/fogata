@@ -1009,7 +1009,9 @@ export class Fogata extends ConfigurablePool {
       }
 
       if (koin_amount == 0) {
-        System.log("no koins to collect");
+        System.log(
+          `no koins to collect for address ${Base58.encode(args.account!)}`
+        );
         // finish the work of refreshBalances
         this.poolState.put(poolState);
         return new ResultUnstake(poolState, userStake, false);
@@ -1164,7 +1166,9 @@ export class Fogata extends ConfigurablePool {
     }
 
     if (balanceVapor == 0) {
-      System.log("no vapor to collect");
+      System.log(
+        `no vapor to collect for address ${Base58.encode(args.account!)}`
+      );
       return BOOLE_FALSE;
     }
 
