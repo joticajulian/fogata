@@ -1,3 +1,20 @@
+## [Fogata v0.7.0](https://github.com/joticajulian/fogata/releases/tag/v0.7.0) (2023-01-23)
+
+property | value
+--- | ---
+size (mainnet) | 76728 bytes (74.93 kB)
+sha256 (mainnet) | fca629cb90f34417a3247a95280772302fdbec435b0d108ad6ce7c1be31aa173
+size (harbinger) | 76738 bytes (74.94 kB)
+sha256 (harbinger) | c27045922fa17650dc29978ce3dffb8d802d026baba513145be89e92478609a3
+
+### 🚀 Features
+
+- fogata version can be read from pool state
+
+### 🐛 Bug Fixes
+
+- fix ABI for javascript in collect_koin_preferences
+
 ## [Fogata v0.6.0](https://github.com/joticajulian/fogata/releases/tag/v0.6.0) (2023-01-10)
 
 property | value
