@@ -37,8 +37,8 @@ message koin_account {
 
 message collect_koin_preferences {
    bytes account = 1 [(koinos.btype) = ADDRESS];
-   uint64 percentage_koin = 2; // percentage with 3 decimals (1000 => 1%)
-   uint64 all_after_virtual = 3;
+   uint64 percentage_koin = 2 [jstype = JS_STRING]; // percentage with 3 decimals (1000 => 1%)
+   uint64 all_after_virtual = 3 [jstype = JS_STRING];
 }
 
 enum allowance_type {
@@ -98,4 +98,7 @@ message pool_state {
    // unstakes represents reduction of virtual vapor), even if there is no
    // real vapor involved
    uint64 virtual_vapor = 12 [jstype = JS_STRING];
+
+   // fogata version
+   string version = 13;
 }

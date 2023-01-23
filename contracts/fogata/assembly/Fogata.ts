@@ -19,6 +19,7 @@ import { multiplyAndDivide, sub } from "./utils";
 import {
   sponsorsContractIdHarbinger,
   sponsorsContractIdMainnet,
+  fogataVersion,
 } from "./constants";
 
 const BOOLE_TRUE = new common.boole(true);
@@ -84,7 +85,8 @@ export class Fogata extends ConfigurablePool {
       1,
       fogata.pool_state.decode,
       fogata.pool_state.encode,
-      () => new fogata.pool_state(0, 0, 0)
+      () =>
+        new fogata.pool_state(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, fogataVersion)
     );
 
     this.stakes = new Storage.Map(
