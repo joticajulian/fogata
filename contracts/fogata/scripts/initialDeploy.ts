@@ -64,13 +64,16 @@ async function main() {
     }
   );
 
+  const { operation: reburnAndSnapshot } =
+    await contract.functions.reburn_and_snapshot();
+
   contract.options.onlyOperation = false;
   const { receipt, transaction } = await contract.deploy({
     abi: JSON.stringify(abi),
     authorizesCallContract: true,
     authorizesTransactionApplication: true,
     authorizesUploadContract: true,
-    nextOperations: [takeOwnership, setPoolParams],
+    nextOperations: [takeOwnership, setPoolParams, reburnAndSnapshot],
   });
   console.log("Transaction submitted. Receipt: ");
   console.log(receipt);
