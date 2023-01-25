@@ -6,10 +6,11 @@ import {
   authority,
   Base58,
 } from "@koinos/sdk-as";
-import { Pausable } from "./Pausable";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 import { sub } from "./utils";
+// import { Pausable } from "./Pausable"; // only for testing
+import { Ownable } from "./Ownable";
 
 /**
  * ManaDelegable is a contract that has a reserved amount of koins,
@@ -21,7 +22,8 @@ import { sub } from "./utils";
  * TODO: Think in a better name since "ManaDelegable" is not just mana
  * but also a transfer of koins to give this mana.
  */
-export class ManaDelegable extends Pausable {
+// export class ManaDelegable extends Pausable {
+export class ManaDelegable extends Ownable {
   callArgs: System.getArgumentsReturn | null;
 
   koinContract: Token | null;
@@ -112,7 +114,7 @@ export class ManaDelegable extends Pausable {
    * @event fogata.add_mana_delegation fogata.koin_account
    */
   add_mana_delegation(args: fogata.koin_account): common.boole {
-    this.require_unpaused();
+    // this.require_unpaused();
     const balance = this.balancesManaDelegators.get(args.account!)!;
     const reservedKoins = this.reservedKoins.get()!;
 
@@ -142,7 +144,7 @@ export class ManaDelegable extends Pausable {
    * @event fogata.remove_mana_delegation fogata.koin_account
    */
   remove_mana_delegation(args: fogata.koin_account): common.boole {
-    this.require_unpaused();
+    // this.require_unpaused();
     const balance = this.balancesManaDelegators.get(args.account!)!;
     const reservedKoins = this.reservedKoins.get()!;
 

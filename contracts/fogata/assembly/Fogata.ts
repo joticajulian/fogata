@@ -352,10 +352,12 @@ export class Fogata extends ConfigurablePool {
     }
     */
 
-    // TODO: return false for the rest of the cases
-    // return BOOLE_FALSE;
-    System.require(this.only_owner(), "not authorized by the owner");
-    return BOOLE_TRUE;
+    // return false for the rest of the cases
+    return BOOLE_FALSE;
+
+    // for testing
+    // System.require(this.only_owner(), "not authorized by the owner");
+    // return BOOLE_TRUE;
   }
 
   getVhpContract(): Token {
@@ -440,36 +442,6 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
-   * Set pool state
-   * @external
-   * TODO: this function was added for testing purposes. It MUST
-   * be removed in production
-   */
-  set_pool_state(args: fogata.pool_state): common.boole {
-    System.require(
-      this.only_owner(),
-      "owner has not authorized to update pool state"
-    );
-    this.poolState.put(args);
-    return BOOLE_TRUE;
-  }
-
-  /**
-   * Set reserved koins
-   * @external
-   * TODO: this function was added to fix bugs. It MUST
-   * be removed in production
-   */
-  set_reserved_koins(args: common.uint64): common.boole {
-    System.require(
-      this.only_owner(),
-      "owner has not authorized to update reserved koins"
-    );
-    this.reservedKoins.put(args);
-    return BOOLE_TRUE;
-  }
-
-  /**
    * Get user preferences
    * @external
    * @readonly
@@ -505,7 +477,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   pay_beneficiary(args: common.address): common.boole {
-    this.require_unpaused();
+    // this.require_unpaused();
     const balance = this.balancesBeneficiaries.get(args.account!)!;
     if (balance.value == 0) {
       System.log(`beneficiary ${Base58.encode(args.account!)} has no balance`);
@@ -671,7 +643,7 @@ export class Fogata extends ConfigurablePool {
    * @event fogata.reburn_and_snapshot
    */
   reburn_and_snapshot(): common.boole {
-    this.require_unpaused();
+    // this.require_unpaused();
     const now = System.getBlockField("header.timestamp")!.uint64_value;
     const poolState = this.getPoolStateUpdated();
     const poolParams = this.poolParams.get()!;
@@ -807,7 +779,7 @@ export class Fogata extends ConfigurablePool {
    * @event fogata.stake fogata.stake_event
    */
   stake(args: fogata.stake_args): common.boole {
-    this.require_unpaused();
+    // this.require_unpaused();
     System.require(
       args.koin_amount > 0 || args.vhp_amount > 0,
       "either koin amount or vhp amount must be greater than 0"
@@ -1133,7 +1105,7 @@ export class Fogata extends ConfigurablePool {
    * @event fogata.unstake fogata.stake_event
    */
   unstake(args: fogata.stake_args): common.boole {
-    this.require_unpaused();
+    // this.require_unpaused();
     const resultUnstake = this._unstake(args);
     return new common.boole(resultUnstake.result);
   }
@@ -1144,7 +1116,7 @@ export class Fogata extends ConfigurablePool {
    * @external
    */
   collect(args: common.address): common.boole {
-    this.require_unpaused();
+    // this.require_unpaused();
 
     // call unstake for collect koin
     const unstakeResult = this._unstake(
@@ -1189,14 +1161,5 @@ export class Fogata extends ConfigurablePool {
     this.poolState.put(poolState);
 
     return BOOLE_TRUE;
-  }
-
-  /**
-   * DEPRECATED. Collect KOIN and VAPOR
-   * @external
-   */
-  collect_vapor(args: common.address): common.boole {
-    this.require_unpaused();
-    return this.collect(args);
   }
 }
