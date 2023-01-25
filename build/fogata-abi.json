@@ -63,24 +63,6 @@
       "read_only": true,
       "read-only": true
     },
-    "set_pool_state": {
-      "argument": "fogata.pool_state",
-      "return": "common.boole",
-      "description": "Set pool state",
-      "entry_point": 1053132370,
-      "entry-point": "0x3ec58652",
-      "read_only": false,
-      "read-only": false
-    },
-    "set_reserved_koins": {
-      "argument": "common.uint64",
-      "return": "common.boole",
-      "description": "Set reserved koins",
-      "entry_point": 2709311113,
-      "entry-point": "0xa17cce89",
-      "read_only": false,
-      "read-only": false
-    },
     "get_collect_koin_preferences": {
       "argument": "common.address",
       "return": "fogata.collect_koin_preferences",
@@ -162,15 +144,6 @@
       "read_only": false,
       "read-only": false
     },
-    "collect_vapor": {
-      "argument": "common.address",
-      "return": "common.boole",
-      "description": "DEPRECATED. Collect KOIN and VAPOR",
-      "entry_point": 591975041,
-      "entry-point": "0x2348d281",
-      "read_only": false,
-      "read-only": false
-    },
     "set_pool_params": {
       "argument": "fogata.pool_params",
       "return": "common.boole",
@@ -222,33 +195,6 @@
       "description": "Withdraw KOINs used in the mana consumption.",
       "entry_point": 1418115305,
       "entry-point": "0x5486b8e9",
-      "read_only": false,
-      "read-only": false
-    },
-    "get_paused": {
-      "argument": "",
-      "return": "common.boole",
-      "description": "Get if the contract is paused",
-      "entry_point": 1451047296,
-      "entry-point": "0x567d3980",
-      "read_only": true,
-      "read-only": true
-    },
-    "pause": {
-      "argument": "",
-      "return": "common.boole",
-      "description": "Pause contract",
-      "entry_point": 1645265087,
-      "entry-point": "0x6210c0bf",
-      "read_only": false,
-      "read-only": false
-    },
-    "unpause": {
-      "argument": "",
-      "return": "common.boole",
-      "description": "Unpause contract",
-      "entry_point": 1838366819,
-      "entry-point": "0x6d934063",
       "read_only": false,
       "read-only": false
     },
@@ -845,12 +791,6 @@
     },
     "fogata.remove_mana_delegation": {
       "argument": "fogata.koin_account"
-    },
-    "pause": {
-      "argument": ""
-    },
-    "unpause": {
-      "argument": ""
     },
     "set_owner": {
       "argument": "ownable.owner"

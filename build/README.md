@@ -1,3 +1,19 @@
+## [Fogata v1.0.0](https://github.com/joticajulian/fogata/releases/tag/v1.0.0) (2023-01-25)
+
+property | value
+--- | ---
+size (mainnet) | 74492 bytes (72.75 kB)
+sha256 (mainnet) | feb1edef5a30f4b607aed4e6d74f971073a8bcd2e6aaf2b42f6e2cef44653c27
+size (harbinger) | 74502 bytes (72.76 kB)
+sha256 (harbinger) | 94dfd27c5ec69438d0035aa4e6ef359401a41f4f56eb834c6659dd1ee12e5525
+
+### 🚀 Features
+
+- the super powers of the owner have been removed: cannot upgrade contract,
+set pool state, set reserved koins, or pause the contract.
+- `collect_vapor` is removed.
+- improvements in the `initialDeploy` script.
+
 ## [Fogata v0.7.0](https://github.com/joticajulian/fogata/releases/tag/v0.7.0) (2023-01-23)
 
 property | value
