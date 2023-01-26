@@ -27,6 +27,15 @@
       "read_only": true,
       "read-only": true
     },
+    "get_vapor_withdrawn": {
+      "argument": "common.address",
+      "return": "common.uint64",
+      "description": "Get vapor withdrawn from the virtual vapor for a specific account",
+      "entry_point": 3739883904,
+      "entry-point": "0xdeea1980",
+      "read_only": true,
+      "read-only": true
+    },
     "get_accounts": {
       "argument": "common.list_args",
       "return": "common.addresses",

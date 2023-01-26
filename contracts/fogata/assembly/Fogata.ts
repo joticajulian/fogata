@@ -394,6 +394,15 @@ export class Fogata extends ConfigurablePool {
   }
 
   /**
+   * Get vapor withdrawn from the virtual vapor for a specific account
+   * @external
+   * @readonly
+   */
+  get_vapor_withdrawn(args: common.address): common.uint64 {
+    return this.vaporWithdrawn.get(args.account!)!;
+  }
+
+  /**
    * Get accounts
    * @external
    * @readonly

@@ -1,3 +1,16 @@
+## [Fogata v0.8.0](https://github.com/joticajulian/fogata/releases/tag/v0.8.0) (2023-01-26)
+
+property | value
+--- | ---
+size (mainnet) | 76921 bytes (75.12 kB)
+sha256 (mainnet) | 8cc3858faed6a2e71271e43ed1f0f8e5304a382c36e2a7ddadf239caa345efa0
+size (harbinger) | 76931 bytes (75.13 kB)
+sha256 (harbinger) | 2f2ef84355b7c7266c2acfcda6dc4adbacac419c33a8487c94870b6b72fafd6c
+
+### 🚀 Features
+
+- new function `get_vapor_withdrawn` (for debug purposes).
+
 ## [Fogata v0.7.0](https://github.com/joticajulian/fogata/releases/tag/v0.7.0) (2023-01-23)
 
 property | value
