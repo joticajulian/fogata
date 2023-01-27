@@ -1,3 +1,16 @@
+## [Fogata v1.1.0](https://github.com/joticajulian/fogata/releases/tag/v1.1.0) (2023-01-27)
+
+property | value
+--- | ---
+size (mainnet) | 73820 bytes (72.09 kB)
+sha256 (mainnet) | 937c9ae4b61ec067686351e03beb5fcb09f6c16377e6468af3ee8e093d42cf9a
+size (harbinger) | 73830 bytes (72.1 kB)
+sha256 (harbinger) | 3313ffcc0dc8980dcfa3ceaf0b792f160909b37301eee1256f9f8648405fde54
+
+### 🚀 Features
+
+- integrate changes from v0.8.1
+
 ## [Fogata v0.8.1](https://github.com/joticajulian/fogata/releases/tag/v0.8.1) (2023-01-27)
 
 property | value
