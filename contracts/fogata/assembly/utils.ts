@@ -27,10 +27,18 @@ export function multiplyAndDivide(
 }
 
 /**
- * return (a - b)
+ * returns (a - b)
  * It checks that there is no an overflow
  */
 export function sub(a: u64, b: u64, ref: string): u64 {
   System.require(a >= b, `internal error: substraction ref '${ref}' failed`);
+  return a - b;
+}
+
+/**
+ * returns (a - b) or ZERO if the substraction is negative
+ */
+export function sub0(a: u64, b: u64): u64 {
+  if (a <= b) return 0;
   return a - b;
 }
