@@ -23,6 +23,7 @@ import { Ownable } from "./Ownable"; // for production
  * but also a transfer of koins to give this mana.
  */
 // export class ManaDelegable extends Pausable { // for testing
+// prettier-ignore
 export class ManaDelegable extends Ownable { // for production
   callArgs: System.getArgumentsReturn | null;
 

@@ -1154,12 +1154,12 @@ export class Fogata extends ConfigurablePool {
    * be removed in production
    */
   // set_pool_state(args: fogata.pool_state): common.boole { // for testing
-    // System.require(                                       // for testing
-      // this.only_owner(),                                  // for testing
-      // "owner has not authorized to update pool state"     // for testing
-    // );                                                    // for testing
-    // this.poolState.put(args);                             // for testing
-    // return BOOLE_TRUE;                                    // for testing
+  // System.require(                                         // for testing
+  // this.only_owner(),                                      // for testing
+  // "owner has not authorized to update pool state"         // for testing
+  // );                                                      // for testing
+  // this.poolState.put(args);                               // for testing
+  // return BOOLE_TRUE;                                      // for testing
   // }                                                       // for testing
 
   /**
@@ -1169,11 +1169,11 @@ export class Fogata extends ConfigurablePool {
    * be removed in production
    */
   // set_reserved_koins(args: common.uint64): common.boole { // for testing
-    // System.require(                                       // for testing
-      // this.only_owner(),                                  // for testing
-      // "owner has not authorized to update reserved koins" // for testing
-    // );                                                    // for testing
-    // this.reservedKoins.put(args);                         // for testing
-    // return BOOLE_TRUE;                                    // for testing
+  // System.require(                                         // for testing
+  // this.only_owner(),                                      // for testing
+  // "owner has not authorized to update reserved koins"     // for testing
+  // );                                                      // for testing
+  // this.reservedKoins.put(args);                           // for testing
+  // return BOOLE_TRUE;                                      // for testing
   // }                                                       // for testing
 }

@@ -14,8 +14,15 @@ function humanFileSize(size) {
 
 const filePathMainnet = path.join(__dirname, "build/fogata.wasm");
 const filePathHarbinger = path.join(__dirname, "build/fogata-harbinger.wasm");
+const filePathPowerMainnet = path.join(__dirname, "build/fogata-power.wasm");
+const filePathPowerHarbinger = path.join(
+  __dirname,
+  "build/fogata-power-harbinger.wasm"
+);
 const dataMainnet = fs.readFileSync(filePathMainnet);
 const dataHarbinger = fs.readFileSync(filePathHarbinger);
+const dataPowerMainnet = fs.readFileSync(filePathPowerMainnet);
+const dataPowerHarbinger = fs.readFileSync(filePathPowerHarbinger);
 const hashMainnet = crypto
   .createHash("sha256")
   .update(dataMainnet)
@@ -23,6 +30,14 @@ const hashMainnet = crypto
 const hashHarbinger = crypto
   .createHash("sha256")
   .update(dataHarbinger)
+  .digest("hex");
+const hashPowerMainnet = crypto
+  .createHash("sha256")
+  .update(dataPowerMainnet)
+  .digest("hex");
+const hashPowerHarbinger = crypto
+  .createHash("sha256")
+  .update(dataPowerHarbinger)
   .digest("hex");
 
 const info = {
@@ -39,6 +54,20 @@ const info = {
     )})`,
     sha256: hashHarbinger,
   },
+  mainnetPower: {
+    file: filePathPowerMainnet,
+    size: `${dataPowerMainnet.length} bytes (${humanFileSize(
+      dataPowerMainnet.length
+    )})`,
+    sha256: hashPowerMainnet,
+  },
+  harbingerPower: {
+    file: filePathPowerHarbinger,
+    size: `${dataPowerHarbinger.length} bytes (${humanFileSize(
+      dataPowerHarbinger.length
+    )})`,
+    sha256: hashPowerHarbinger,
+  },
 };
 
 console.log(info);
@@ -54,14 +83,14 @@ size (mainnet) | ${info.mainnet.size}
 sha256 (mainnet) | ${info.mainnet.sha256}
 size (harbinger) | ${info.harbinger.size}
 sha256 (harbinger) | ${info.harbinger.sha256}
+size (mainnet-power) | ${info.mainnetPower.size}
+sha256 (mainnet-power) | ${info.mainnetPower.sha256}
+size (harbinger-power) | ${info.harbingerPower.size}
+sha256 (harbinger-power) | ${info.harbingerPower.sha256}
 
 ### 🚀 Features
 
--
-
-### 🐛 Bug Fixes
-
--
+- code compiled for POWER (where owner have extra powers: pause contract, upgrade contract, set pool state, set reserved koins)
 
 ${readmeData}`;
 fs.writeFileSync(readmePath, readmeData);
