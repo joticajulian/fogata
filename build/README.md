@@ -1,3 +1,20 @@
+## [Fogata v1.1.1](https://github.com/joticajulian/fogata/releases/tag/v1.1.1) (2023-01-30)
+
+property | value
+--- | ---
+size (mainnet) | 73820 bytes (72.09 kB)
+sha256 (mainnet) | 814f37ca8e2969849c1de58037982f1ae5611808b099cbbdc8ffda033a61ff76
+size (harbinger) | 73830 bytes (72.1 kB)
+sha256 (harbinger) | 3203babfe138ce3c84788160fcc469c8e7d09f48dbf3725e95d53ea999ea70af
+size (mainnet-power) | 75935 bytes (74.16 kB)
+sha256 (mainnet-power) | 8bb43019e3379e7178f75f682335b64bd45d74499971451d27d5cbdeb1e89e6d
+size (harbinger-power) | 75945 bytes (74.17 kB)
+sha256 (harbinger-power) | 533137c0ce9c17a7413c9f354928f2d08907b3e2ba4eadfa45ecc76ddbebd1a3
+
+### 🚀 Features
+
+- code compiled for POWER (where owner have extra powers: pause contract, upgrade contract, set pool state, set reserved koins)
+
 ## [Fogata v1.1.0](https://github.com/joticajulian/fogata/releases/tag/v1.1.0) (2023-01-27)
 
 property | value
