@@ -371,7 +371,7 @@ export class Fogata extends ConfigurablePool {
   getSponsorsContract(): Sponsors {
     return new Sponsors(
       Base58.decode(
-        BUILD_FOR_TESTING
+        BUILD_FOR_HARBINGER
           ? sponsorsContractIdHarbinger
           : sponsorsContractIdMainnet
       )

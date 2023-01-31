@@ -27,10 +27,10 @@
     "yaml": "^2.1.3"
   },
   "scripts": {
-    "asbuild": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target release --use BUILD_FOR_TESTING=0",
-    "asbuild:harbinger": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-harbinger.json --use abort= --target release --use BUILD_FOR_TESTING=1",
-    "asbuild-power": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-power.json --use abort= --target release --use BUILD_FOR_TESTING=0",
-    "asbuild-power:harbinger": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-power-harbinger.json --use abort= --target release --use BUILD_FOR_TESTING=1",
+    "asbuild": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig.json --use abort= --target release --use BUILD_FOR_HARBINGER=0",
+    "asbuild:harbinger": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-harbinger.json --use abort= --target release --use BUILD_FOR_HARBINGER=1",
+    "asbuild-power": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-power.json --use abort= --target release --use BUILD_FOR_HARBINGER=0",
+    "asbuild-power:harbinger": "asc contracts/fogata/build/index.ts --config contracts/fogata/asconfig-power-harbinger.json --use abort= --target release --use BUILD_FOR_HARBINGER=1",
     "prebuild:prod": "node setFogataVersion && node codeForTest false && yarn precompile",
     "prebuild:test": "node setFogataVersion && node codeForTest true && node auxAbi.js pre && yarn precompile && node auxAbi.js post",
     "build": "yarn prebuild:prod && yarn asbuild",
