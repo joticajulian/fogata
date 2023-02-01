@@ -33,5 +33,5 @@ function applyActions(filePath) {
   fs.writeFileSync(absFilePath, data);
 }
 
-applyActions("./contracts/fogata/assembly/ManaDelegable.ts");
+applyActions("./contracts/fogata/assembly/KoinReservable.ts");
 applyActions("./contracts/fogata/assembly/Fogata.ts");

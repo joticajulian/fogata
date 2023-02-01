@@ -49,7 +49,7 @@ The contribution to this contract is a decision of the owner of the pool when th
 
 Then, Fogata distributes this vapor token between the participants in the same way it distributes Koins, using snapshots. In this way, the participants of the pool will be the ones that will decide which projects will be funded.
 
-## Mana delegation
+## Koin reservation
 
 The contract has an extra feature that allows to the owner to insert a certain amount of Koins in the pool with the purpose to use it for mana consumption. Then the pool will be able to produce blocks without consuming the mana from the koins that will be destinated to participants and beneficiaries. These koins will not be taken into account in the calculation of payments or reburns.
 

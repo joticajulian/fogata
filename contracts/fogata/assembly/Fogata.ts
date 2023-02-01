@@ -533,10 +533,10 @@ export class Fogata extends ConfigurablePool {
 
     this.balancesBeneficiaries.remove(args.account!);
 
-    // remove this amount from the reserved koins
-    const reservedKoins = this.reservedKoins.get()!;
-    reservedKoins.value = sub0(reservedKoins.value, balance.value);
-    this.reservedKoins.put(reservedKoins);
+    // remove this amount from the reserved koin
+    const allReservedKoin = this.allReservedKoin.get()!;
+    allReservedKoin.value = sub0(allReservedKoin.value, balance.value);
+    this.allReservedKoin.put(allReservedKoin);
 
     return BOOLE_TRUE;
   }
@@ -577,12 +577,12 @@ export class Fogata extends ConfigurablePool {
    * timeframe to avoid for cicles)
    */
   getPoolStateUpdated(readonly: boolean = false): fogata.pool_state {
-    const reservedKoins = this.reservedKoins.get()!;
+    const allReservedKoin = this.allReservedKoin.get()!;
     const poolState = this.poolState.get()!;
 
     // get the virtual balance of pool
     const poolVirtual =
-      this.get_available_koins() +
+      this.get_available_koin() +
       this.getVhpContract().balanceOf(this.contractId);
 
     // check how much this virtual balance has increased
@@ -611,10 +611,10 @@ export class Fogata extends ConfigurablePool {
     }
 
     if (!readonly && totalFeesCollected > 0) {
-      // update the reserved koins to not take them into account
-      // in the get_available_koins() computation
-      reservedKoins.value += totalFeesCollected;
-      this.reservedKoins.put(reservedKoins);
+      // update the reserved koin to not take them into account
+      // in the get_available_koin() computation
+      allReservedKoin.value += totalFeesCollected;
+      this.allReservedKoin.put(allReservedKoin);
     }
 
     // calculate the new virtual balance of the pool
@@ -655,7 +655,7 @@ export class Fogata extends ConfigurablePool {
       return BOOLE_TRUE;
     }
 
-    let koinBalance = this.get_available_koins();
+    let koinBalance = this.get_available_koin();
 
     // burn the amount that was not withdrawn in the previous snapshot
     const amountToBurn = sub0(
@@ -972,7 +972,7 @@ export class Fogata extends ConfigurablePool {
 
       if (koin_amount == 0) {
         System.log(
-          `no koins to collect for address ${Base58.encode(args.account!)}`
+          `no koin to collect for address ${Base58.encode(args.account!)}`
         );
         // finish the work of refreshBalances
         this.poolState.put(poolState);
@@ -1027,7 +1027,7 @@ export class Fogata extends ConfigurablePool {
         args.account!,
         koin_amount
       );
-      System.require(transferStatus1 == true, "transfer of koins rejected");
+      System.require(transferStatus1 == true, "transfer of koin rejected");
       this.snapshotStakes.put(args.account!, snapshotUserStake);
     }
 
@@ -1168,12 +1168,12 @@ export class Fogata extends ConfigurablePool {
    * TODO: this function was added to fix bugs. It MUST
    * be removed in production
    */
-  // set_reserved_koins(args: common.uint64): common.boole { // for testing
+  // set_all_reserved_koin(args: common.uint64): common.boole {  // for testing
   // System.require(                                         // for testing
   // this.only_owner(),                                      // for testing
-  // "owner has not authorized to update reserved koins"     // for testing
+  // "owner has not authorized to update reserved koin"      // for testing
   // );                                                      // for testing
-  // this.reservedKoins.put(args);                           // for testing
+  // this.allReservedKoin.put(args);                            // for testing
   // return BOOLE_TRUE;                                      // for testing
   // }                                                       // for testing
 }

@@ -15,7 +15,7 @@ module.exports = {
     "./ISponsors.ts",
     "./Ownable.ts",
     "./Pausable.ts",
-    "./ManaDelegable.ts",
+    "./KoinReservable.ts",
     "./ConfigurablePool.ts",
   ],
   sourceDir: "./assembly",

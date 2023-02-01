@@ -190,7 +190,7 @@ export class Sponsors {
   }
 
   /**
-   * Contribute with koins to the sponsors program, and get back
+   * Contribute with koin to the sponsors program, and get back
    * governance tokens
    * @external
    */

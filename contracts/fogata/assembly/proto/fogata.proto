@@ -70,7 +70,7 @@ message pool_state {
    // total stake of the pool
    uint64 stake = 1 [jstype = JS_STRING];
 
-   // total virtual balance (koin + vhp) without touching the reserved koins
+   // total virtual balance (koin + vhp) without touching the reserved koin
    uint64 virtual = 2 [jstype = JS_STRING];
 
    // snapshots taken on each period

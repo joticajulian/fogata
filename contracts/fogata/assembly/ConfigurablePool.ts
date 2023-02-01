@@ -1,11 +1,11 @@
 import { System, Storage, Arrays } from "@koinos/sdk-as";
-import { ManaDelegable } from "./ManaDelegable";
+import { KoinReservable } from "./KoinReservable";
 import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 
 export const ONE_HUNDRED_PERCENT: u64 = 100000;
 
-export class ConfigurablePool extends ManaDelegable {
+export class ConfigurablePool extends KoinReservable {
   callArgs: System.getArgumentsReturn | null;
 
   poolParams: Storage.Obj<fogata.pool_params>;
