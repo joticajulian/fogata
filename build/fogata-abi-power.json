@@ -162,12 +162,12 @@
       "read_only": false,
       "read-only": false
     },
-    "set_reserved_koins": {
+    "set_all_reserved_koin": {
       "argument": "common.uint64",
       "return": "common.boole",
       "description": "Set reserved koins",
-      "entry_point": 2709311113,
-      "entry-point": "0xa17cce89",
+      "entry_point": 2128991467,
+      "entry-point": "0x7ee5d4eb",
       "read_only": false,
       "read-only": false
     },
@@ -189,39 +189,39 @@
       "read_only": true,
       "read-only": true
     },
-    "get_reserved_koins": {
+    "get_all_reserved_koin": {
       "argument": "",
       "return": "common.uint64",
-      "description": "Get reserved koins (for beneficiaries and mana supporters)",
-      "entry_point": 1407334024,
-      "entry-point": "0x53e23688",
+      "description": "Get reserved koin (for beneficiaries and mana supporters)",
+      "entry_point": 1184241330,
+      "entry-point": "0x469616b2",
       "read_only": true,
       "read-only": true
     },
-    "get_mana_delegation": {
+    "get_reserved_koin": {
       "argument": "common.address",
       "return": "common.uint64",
       "description": "Get koin balance of mana supporter",
-      "entry_point": 826351073,
-      "entry-point": "0x31411de1",
+      "entry_point": 3116625487,
+      "entry-point": "0xb9c3ee4f",
       "read_only": true,
       "read-only": true
     },
-    "add_mana_delegation": {
+    "add_reserved_koin": {
       "argument": "fogata.koin_account",
       "return": "common.boole",
       "description": "Transfer KOINs to the pool to support the mana consumption. This amount will not be burned",
-      "entry_point": 2022868113,
-      "entry-point": "0x78928491",
+      "entry_point": 3237584295,
+      "entry-point": "0xc0f99da7",
       "read_only": false,
       "read-only": false
     },
-    "remove_mana_delegation": {
+    "remove_reserved_koin": {
       "argument": "fogata.koin_account",
       "return": "common.boole",
       "description": "Withdraw KOINs used in the mana consumption.",
-      "entry_point": 1418115305,
-      "entry-point": "0x5486b8e9",
+      "entry_point": 2259544932,
+      "entry-point": "0x86adeb64",
       "read_only": false,
       "read-only": false
     },
@@ -840,10 +840,10 @@
     "fogata.set_pool_params": {
       "argument": "fogata.pool_params"
     },
-    "fogata.add_mana_delegation": {
+    "fogata.add_reserved_koin": {
       "argument": "fogata.koin_account"
     },
-    "fogata.remove_mana_delegation": {
+    "fogata.remove_reserved_koin": {
       "argument": "fogata.koin_account"
     },
     "pause": {

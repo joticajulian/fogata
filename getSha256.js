@@ -90,7 +90,11 @@ sha256 (harbinger-power) | ${info.harbingerPower.sha256}
 
 ### 🚀 Features
 
-- code compiled for POWER (where owner have extra powers: pause contract, upgrade contract, set pool state, set reserved koin)
+-
+
+### 🐛 Bug Fixes
+
+-
 
 ${readmeData}`;
 fs.writeFileSync(readmePath, readmeData);

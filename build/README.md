@@ -1,3 +1,29 @@
+## [Fogata v1.2.0](https://github.com/joticajulian/fogata/releases/tag/v1.2.0) (2023-02-01)
+
+property | value
+--- | ---
+size (mainnet) | 73812 bytes (72.08 kB)
+sha256 (mainnet) | 6ed250c3416ec90ed7d1548cbdec1c7211a2398b657ff01061d768f40d3c334b
+size (harbinger) | 73822 bytes (72.09 kB)
+sha256 (harbinger) | f89a3c941c6290a92300c3a1717ca2fb633b6641abcba1acda9edf4ecfdcdb61
+size (mainnet-power) | 75925 bytes (74.15 kB)
+sha256 (mainnet-power) | 0ee1221a8e99eb66355bab6a8a302157014ae55a1ca751aab35fb1a67ec15285
+size (harbinger-power) | 75935 bytes (74.16 kB)
+sha256 (harbinger-power) | aec46c75cc8071288a5898f2b19f4908b04d62a1ef12ece44478ebd3313ed137
+
+### 🚀 Features
+
+- renaming of variables, functions and classes:
+  * ManaDelegable -> KoinReservable
+  * reservedKoins -> allReservedKoin
+  * get_available_koins -> get_available_koin
+  * set_reserved_koins -> set_all_reserved_koin (only in power mode)
+  * balancesManaDelegators -> balancesReservedKoin
+  * get_reserved_koins -> get_all_reserved_koin
+  * get_mana_delegation -> get_reserved_koin
+  * add_mana_delegation -> add_reserved_koin
+  * remove_mana_delegation -> remove_reserved_koin
+
 ## [Fogata v1.1.1](https://github.com/joticajulian/fogata/releases/tag/v1.1.1) (2023-01-30)
 
 property | value
