@@ -3,16 +3,20 @@ import path from "path";
 import { Signer, Contract, Provider } from "koilib";
 import { TransactionJson } from "koilib/lib/interface";
 import * as dotenv from "dotenv";
-import abi from "../build/fogata-abi.json";
+import abiNoPower from "../build/fogata-abi.json";
+import abiPower from "../build/fogata-abi-power.json";
 import koinosConfig from "../koinos.config.js";
 import { contractDetails } from "../../utils";
 
 dotenv.config();
 
-const [inputNetworkName] = process.argv.slice(2);
+const [inputNetworkName, inputPower] = process.argv.slice(2);
 
 async function main() {
   const networkName = inputNetworkName || "harbinger";
+  const power = inputPower || "";
+  if (!["power", ""].includes(power))
+    throw new Error(`invalid power option ${power}`);
   const network = koinosConfig.networks[networkName];
   if (!network) throw new Error(`network ${networkName} not found`);
   const provider = new Provider(network.rpcNodes);
@@ -25,18 +29,26 @@ async function main() {
   accountWithFunds.provider = provider;
   contractOwner.provider = provider;
 
-  const wasmFile = path.join(
-    __dirname,
-    networkName === "harbinger"
-      ? "../build/release/fogata-harbinger.wasm"
-      : "../build/release/fogata.wasm"
-  );
+  let filename: string;
+  if (networkName === "mainnet" && power === "") {
+    filename = "fogata.wasm";
+  } else if (networkName === "mainnet" && power === "power") {
+    filename = "fogata-power.wasm";
+  } else if (networkName === "harbinger" && power === "") {
+    filename = "fogata-harbinger.wasm";
+  } else if (networkName === "harbinger" && power === "power") {
+    filename = "fogata-power-harbinger.wasm";
+  } else {
+    throw new Error("error with filename");
+  }
+  const wasmFile = path.join(__dirname, "../build/release", filename);
 
   if (!network.accounts.contract.id)
     throw new Error(
       "the contract id of the pool is not defined in the env variables"
     );
 
+  const abi = power ? abiPower : abiNoPower;
   const contract = new Contract({
     id: network.accounts.contract.id,
     abi,
