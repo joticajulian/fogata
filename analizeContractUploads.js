@@ -5,6 +5,12 @@ const contractId = "14iHqMGBznBM7xJXhkrQ266FgoFdymCqLM";
 
 const fogataVersions = [
   {
+    version: "1.2.0",
+    network: "mainnet",
+    hash: "6ed250c3416ec90ed7d1548cbdec1c7211a2398b657ff01061d768f40d3c334b",
+    size: 73812,
+  },
+  /*{
     version: "0.2.1",
     network: "harbinger",
     hash: "f0d044e98b9d5053c97256fd75613056d966ca45d240a1c783dc3615209d712e",
@@ -80,17 +86,18 @@ const fogataVersions = [
     hash: "1b94fea2aeb1bc07af314c0fb125349d70462e05165f8fab563e17da578fefc1",
     size: 76245,
   },
-
   {
     version: "0.6.0",
     network: "mainnet",
     hash: "a146ffc8b6b86ef8ca131edb9cea123ddee659582c6cdea3fb36f231741b88ba",
     size: 76235,
-  },
+  },*/
 ];
 
 (async () => {
-  const provider = new Provider(["https://api.koinos.io"]);
+  // const provider = new Provider(["https://api.koinos.io"]);
+  // const provider = new Provider(["https://harbinger-api.koinos.io"]);
+  const provider = new Provider(["https://api.koinosblocks.com"]);
   let found = false;
   let seqNum = 0;
   let contractUploads = 0;
