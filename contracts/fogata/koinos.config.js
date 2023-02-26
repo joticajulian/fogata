@@ -46,7 +46,7 @@ module.exports = {
       },
     },
     mainnet: {
-      rpcNodes: ["https://api.koinosblocks.com", "https://api.koinos.io"],
+      rpcNodes: ["https://api.koinos.io", "https://api.koinosblocks.com"],
       accounts: {
         manaSharer: {
           privateKey: process.env.MAINNET_MANA_SHARER_PRIVATE_KEY,
