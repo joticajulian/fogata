@@ -4,6 +4,7 @@ import { fogata } from "./proto/fogata";
 import { common } from "./proto/common";
 
 export const ONE_HUNDRED_PERCENT: u64 = 100000;
+export const ONE_MONTH: u64 = 2592000000;
 
 export class ConfigurablePool extends KoinReservable {
   callArgs: System.getArgumentsReturn | null;
@@ -31,6 +32,9 @@ export class ConfigurablePool extends KoinReservable {
     System.require(
       this.only_owner(),
       "owner has not authorized to update params"
+    );
+    System.require(
+      args.payment_period <= ONE_MONTH, "the payment period cannot be greater than 1 month"
     );
     let totalPercentage: u32 = 0;
     for (let i = 0; i < args.beneficiaries.length; i += 1) {

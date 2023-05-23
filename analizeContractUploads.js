@@ -1,9 +1,15 @@
 const crypto = require("crypto");
 const { Provider, utils } = require("koilib");
 
-const contractId = "14iHqMGBznBM7xJXhkrQ266FgoFdymCqLM";
+const [contractId] = process.argv.slice(2);
 
 const fogataVersions = [
+  {
+    version: "1.2.1",
+    network: "mainnet",
+    hash: "94cfd2cdd8e50856dfbe9a7057bddcd69ae975bc902915dd98601d0b77983c04",
+    size: 73963,
+  },
   {
     version: "1.2.0",
     network: "mainnet",
