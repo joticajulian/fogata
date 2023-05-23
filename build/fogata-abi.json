@@ -153,6 +153,24 @@
       "read_only": false,
       "read-only": false
     },
+    "set_pool_state": {
+      "argument": "fogata.pool_state",
+      "return": "common.boole",
+      "description": "Set pool state",
+      "entry_point": 1053132370,
+      "entry-point": "0x3ec58652",
+      "read_only": false,
+      "read-only": false
+    },
+    "set_all_reserved_koin": {
+      "argument": "common.uint64",
+      "return": "common.boole",
+      "description": "Set reserved koins",
+      "entry_point": 2128991467,
+      "entry-point": "0x7ee5d4eb",
+      "read_only": false,
+      "read-only": false
+    },
     "set_pool_params": {
       "argument": "fogata.pool_params",
       "return": "common.boole",
@@ -204,6 +222,33 @@
       "description": "Withdraw KOINs used in the mana consumption.",
       "entry_point": 2259544932,
       "entry-point": "0x86adeb64",
+      "read_only": false,
+      "read-only": false
+    },
+    "get_paused": {
+      "argument": "",
+      "return": "common.boole",
+      "description": "Get if the contract is paused",
+      "entry_point": 1451047296,
+      "entry-point": "0x567d3980",
+      "read_only": true,
+      "read-only": true
+    },
+    "pause": {
+      "argument": "",
+      "return": "common.boole",
+      "description": "Pause contract",
+      "entry_point": 1645265087,
+      "entry-point": "0x6210c0bf",
+      "read_only": false,
+      "read-only": false
+    },
+    "unpause": {
+      "argument": "",
+      "return": "common.boole",
+      "description": "Unpause contract",
+      "entry_point": 1838366819,
+      "entry-point": "0x6d934063",
       "read_only": false,
       "read-only": false
     },
@@ -800,6 +845,12 @@
     },
     "fogata.remove_reserved_koin": {
       "argument": "fogata.koin_account"
+    },
+    "pause": {
+      "argument": ""
+    },
+    "unpause": {
+      "argument": ""
     },
     "set_owner": {
       "argument": "ownable.owner"

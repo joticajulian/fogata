@@ -1,3 +1,20 @@
+## [Fogata v1.2.1](https://github.com/joticajulian/fogata/releases/tag/v1.2.1) (2023-05-23)
+
+property | value
+--- | ---
+size (mainnet) | 73963 bytes (72.23 kB)
+sha256 (mainnet) | 94cfd2cdd8e50856dfbe9a7057bddcd69ae975bc902915dd98601d0b77983c04
+size (harbinger) | 73973 bytes (72.24 kB)
+sha256 (harbinger) | 1dc0b1cc9c36cde1403218046da04a7c348cc99c8770fd5f3d58b8ed37ffb069
+size (mainnet-power) | 76076 bytes (74.29 kB)
+sha256 (mainnet-power) | 9a1913cc1aec8ce336482cc9a9dc9541c88d538d44fb03ba0088af813835ec10
+size (harbinger-power) | 76086 bytes (74.3 kB)
+sha256 (harbinger-power) | 4e0307e9ab55a1013e2dc36d437f1762710bb93ab3cdef52fabe1203a4ab31eb
+
+### 🐛 Bug Fixes
+
+- Limit reburn period to max 1 month
+
 ## [Fogata v1.2.0](https://github.com/joticajulian/fogata/releases/tag/v1.2.0) (2023-02-01)
 
 property | value
